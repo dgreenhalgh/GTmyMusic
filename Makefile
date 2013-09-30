@@ -25,4 +25,4 @@ server: server.c
 
 clean:
 	    rm -f client server *.o
-	    
+
