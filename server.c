@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
     unsigned int address_length;                /* Length of address data struct */
 
 	char command_buffer[RCV_BUF_SIZE];           /* Buff to store command from client */
-	char response_buffer[SEND_BUF_SIZE];         /* Buff to store response from server */
+	char response_buffer[SND_BUF_SIZE];          /* Buff to store response from server */
 
     size_t byte_count;              // Byte counter
     size_t response_length;         // Output Length
@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
  */
 int list()
 {
-
+	return(0);
 }
 
 /* 
@@ -130,7 +130,7 @@ int list()
  */
 int diff()
 {
-
+	return(0);
 }
 
 /* 
@@ -138,7 +138,7 @@ int diff()
  */
 int pull()
 {
-
+	return(0);
 }
 
 /* 
@@ -146,5 +146,5 @@ int pull()
  */
 int leave()
 {
-
+	return(0);
 }
