@@ -41,10 +41,10 @@ unsigned short server_port = 2013; 	// temp
 
 /* Function pointers */
 int send_command(int);
-int menu_interface(int);
+int switch_state(int);
 void print_main_menu_options();
-int init_connection(char*, unsigned short);
-int create_tcp_socket(int);
+void init_connection(char*, unsigned short);
+void create_tcp_socket(int);
 
 /*
  * The main function
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 	if(argc == 1)
 	{
 		/* Command line interface */
-		menu_interface(ERROR_STATE);
+		switch_state(ERROR_STATE);
 
 	}
 	else if(argc == 2)
@@ -100,8 +100,11 @@ int send_command(int cmd)
 
 	init_connection(server_ip, server_port);
 
+	/* Send command string to the server */
+	size_t num_bytes = send(client_sock, user_command, strlen(user_command), 0); // client sock has no value yet
 
-
+	if((num_bytes < 0) || (num_bytes != strlen(user_command)))
+		switch_state(ERROR_STATE);
 
 	//menuInterface(START_STATE);
 	return cmd;
@@ -113,7 +116,7 @@ int send_command(int cmd)
  * Param: The state identifier to present to the user.
  * Returns: The state identifier
  */
-int menu_interface(int state)
+int switch_state(int state)
 {
 	if(state == START_STATE)
 	{
@@ -142,29 +145,42 @@ void print_main_menu_options()
 
 /*
  * Initializes a connection with the server
- *
- * Returns: -1 if the connection attempt failed
  */
-int init_connection(char* serv_ip, unsigned short serv_port)
+void init_connection(char* serv_ip, unsigned short serv_port)
 {
 	memset(&send_buffer, 0, SNDBUFSIZE);
 	memset(&rcv_buffer, 0, RCVBUFSIZE);
 
 	create_tcp_socket(client_sock); // client_sock has no value yet
+
+	/* Construct the server address structure */
+	memset(&serv_addr, 0, sizeof(serv_addr));
+	serv_addr.sin_family = AF_INET;
+
+	/* Convert address */
+	int ret_val = inet_pton(AF_INET, serv_ip, &serv_addr.sin_addr.s_addr);
+
+	if(ret_val <= 0)
+		switch_state(ERROR_STATE);
+
+
+	serv_addr.sin_port = htons(serv_port);
+
+	/* Establish connection */
+	if(connect(client_sock, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
+		switch_state(ERROR_STATE);
 }
 
 /*
  * Creates a TCP socket on the client side
  *
  * Param: The client socket
- * Returns: 
  */
-int create_tcp_socket(int client_socket)
+void create_tcp_socket(int client_socket)
 {
 	client_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
 	if(client_socket < 0)
-		menu_interface(ERROR_STATE);
+		switch_state(ERROR_STATE);
 }
-
 
