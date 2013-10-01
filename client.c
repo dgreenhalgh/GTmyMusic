@@ -24,7 +24,9 @@ int send_command(int);
 int menu_interface(int);
 void print_main_menu_options();
 
-/* The main function */
+/*
+ * The main function
+ */
 int main(int argc, char *argv[])
 {
 	if(argc == 1)
@@ -63,14 +65,27 @@ int main(int argc, char *argv[])
 	}
 }
 
+/*
+ * Sends a command to the server.
+ *
+ * Param: cmd - integer identifier for the command being sent
+ * Returns: cmd - The state identifier of the command being sent
+ */
 int send_command(int cmd)
 {
 	char* user_command = commands[cmd];
 	printf("%s\n", user_command);
 
 	//menuInterface(START_STATE);
+	return cmd;
 }
 
+/*
+ * Presenter for the command interface
+ *
+ * Param: The state identifier to present to the user.
+ * Returns: The state identifier
+ */
 int menu_interface(int state)
 {
 	if(state == START_STATE)
@@ -80,8 +95,13 @@ int menu_interface(int state)
 		//printf("%d", getchar());
 		send_command(getchar() - 49);
 	}
+
+	return state;
 }
 
+/*
+ * Prints out the formatted main menu of command options to the user
+ */
 void print_main_menu_options()
 {
 	printf("Please enter the number corresponding to one of the following commands:\n");
