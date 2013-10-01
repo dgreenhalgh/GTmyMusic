@@ -15,7 +15,7 @@
 /* Strings.xml */
 char* commands[] = {"LIST", "DIFF", "PULL", "LEAVE"};
 
-const char* badCmd = "Command not recognized\n";
+const char* badCmd = "Command not recognized, exiting now.\n";
 
 /* Function pointers */
 int directCall(int);
