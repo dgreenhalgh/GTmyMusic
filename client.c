@@ -16,23 +16,23 @@
 char* commands[] = {"LIST", "DIFF", "PULL", "LEAVE"};
 
 const char* badCmd = "Command not recognized, exiting now.\n";
+const char* badNumCmds = "Improper number of args, exiting now.\nCommand line menu usage: ./musicClient\nDirect command usage: ./musicClient <command>\n";
 
 /* Function pointers */
 int directCall(int);
+int menuInterface(int);
 
 /* The main function */
 int main(int argc, char *argv[])
 {
-	//printf("%d", argc);
-	/* Command line interface */
 	if(argc == 1)
 	{
+		/* Command line interface */
 
 	}
-
-	/* Direct command */
-	if(argc == 2)
+	else if(argc == 2)
 	{
+		/* Direct command */
 		if(strcmp(argv[1], "list") == 0)
 		{
 			directCall(LIST);
@@ -53,13 +53,17 @@ int main(int argc, char *argv[])
 		{
 			printf("%s", badCmd);
 		}
-
-
+	}
+	else
+	{
+		printf("%s", badNumCmds);
 	}
 }
 
 int directCall(int cmd)
 {
 	char* userCommand = commands[cmd];
-	printf("%s", userCommand);
+	printf("%s\n", userCommand);
 }
+
+
