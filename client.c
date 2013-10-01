@@ -12,6 +12,7 @@
 #define PULL 2
 #define LEAVE 3
 #define START_STATE 100
+#define ASCII_CORRECTOR (-49)
 
 /* Strings.xml */
 char* commands[] = {"LIST", "DIFF", "PULL", "LEAVE"};
@@ -92,8 +93,8 @@ int menu_interface(int state)
 	{
 		printf("Welcome!\n");
 		print_main_menu_options();
-		//printf("%d", getchar());
-		send_command(getchar() - 49);
+		
+		send_command(getchar() + ASCII_CORRECTOR); 
 	}
 
 	return state;
