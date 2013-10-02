@@ -118,7 +118,9 @@ int main(int argc, char *argv[])
 /* Other functions: */
 
 /* 
- * List 
+ * Command: LIST
+ *
+ * Sends the list of files currently on the server to the requesting client
  */
 int list()
 {
@@ -126,7 +128,10 @@ int list()
 }
 
 /* 
- * Diff 
+ * Command: DIFF
+ *
+ * Sends the list of files currently on the server to the requesting client so 
+ * that it can be compared to the list of files on the client machine.
  */
 int diff()
 {
@@ -134,7 +139,10 @@ int diff()
 }
 
 /* 
- * Pull 
+ * Command: PULL
+ *
+ * Diffs and downloads the files not on the client machine to the client 
+ * machine
  */
 int pull()
 {
@@ -142,7 +150,9 @@ int pull()
 }
 
 /* 
- * Leave 
+ * Command: LEAVE
+ *
+ * Client machine and closes its connection with the server
  */
 int leave()
 {

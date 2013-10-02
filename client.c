@@ -1,6 +1,11 @@
-/* Devin Gonzalez & David Greenhalgh */
-/* CS 3251, Project 2 */
-/* client.c */
+/*///////////////////////////////////////////////////////////
+*
+* FILE:     	client.c
+* AUTHOR:   	Devin Gonzalez & David Greenhalgh
+* PROJECT:  	CS 3251 Project 2 - Professor Traynor
+* DESCRIPTION:  Network Client Code
+*
+*////////////////////////////////////////////////////////////
 
 #include <stdio.h>
 #include <sys/socket.h>
