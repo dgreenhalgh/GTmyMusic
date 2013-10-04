@@ -28,21 +28,7 @@
 #define RCVBUFSIZE 512		    /* The receive buffer size */
 #define SNDBUFSIZE 512		    /* The send buffer size */
 
-/* Strings.xml */
-char* commands[] = {"LIST", "DIFF", "PULL", "LEAVE"};
-
-const char* bad_command = "Command not recognized, exiting now.\n";
-const char* bad_number_of_commands = "Improper number of args, exiting now.\nCommand line menu usage: ./musicClient\nDirect command usage: ./musicClient <command>\n";
-
-/* Socket info */
-int client_sock;
-struct sockaddr_in serv_addr;
-
-char rcv_buffer[RCVBUFSIZE];
-char send_buffer[SNDBUFSIZE];
-
-char* server_ip = "127.0.0.1"; 		// temp
-unsigned short server_port = 2013; 	// temp
+#define NUM_FILES 10
 
 /* Function pointers */
 int send_command(int);
@@ -51,15 +37,41 @@ void print_main_menu_options();
 void init_connection(char*, unsigned short);
 void create_tcp_socket(int);
 
+/* Strings.xml */
+char* commands[] = {"LIST", "DIFF", "PULL", "LEAVE"};
+
+const char* bad_command = "Command not recognized, exiting now.\n";
+const char* bad_number_of_commands = "Improper number of args, exiting now.\nCommand line menu usage: ./musicClient\nDirect command usage: ./musicClient <command>\n";
+
+/* Socket info */
+int client_sock, iFile;
+struct sockaddr_in serv_addr;
+
+char rcv_buffer[RCVBUFSIZE];
+char send_buffer[SNDBUFSIZE];
+
+char* server_ip = "127.0.0.1"; 		// temp
+unsigned short server_port = 2013; 	// temp
+
+FILE* local_files[NUM_FILES];
+
 /*
  * The main function
  */
 int main(int argc, char *argv[])
 {
+	/* Read in local files */
+	for(iFile = 0; iFile < NUM_FILES; iFile++)
+	{
+		char filename[20];
+		sprintf(filename, "song%d", iFile);
+		local_files[iFile] = fopen(filename, "r");
+	}
+
 	if(argc == 1)
 	{
 		/* Command line interface */
-		switch_state(ERROR_STATE);
+		switch_state(START_STATE);
 
 	}
 	else if(argc == 2)

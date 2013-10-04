@@ -24,6 +24,8 @@
 #define PORT_NUMBER 	1500	/* Server port number */
 #define MAX_PENDING 	5		/* Maximum outstanding connection requests. */
 
+#define NUM_FILES 10
+
 /* Constants */
 static const char* example = "Char Star";
 
@@ -34,23 +36,35 @@ int diff();
 int pull();
 int leave();
 
+
+int server_socket;                          /* Server Socket */
+int client_socket;                          /* Client Socket */
+struct sockaddr_in server_address;          /* Local address */
+struct sockaddr_in client_address;          /* Client address */
+unsigned short server_port;                 /* Server port */
+unsigned int address_length;                /* Length of address data struct */
+
+char command_buffer[RCV_BUF_SIZE];           /* Buff to store command from client */
+char response_buffer[SND_BUF_SIZE];          /* Buff to store response from server */
+
+size_t byte_count;              // Byte counter
+size_t response_length;         // Output Length
+
+int iFile;
+FILE* server_files[NUM_FILES];
+
 /* 
  * The main function. 
  */
 int main(int argc, char *argv[])
 {
-	int server_socket;                          /* Server Socket */
-    int client_socket;                          /* Client Socket */
-    struct sockaddr_in server_address;          /* Local address */
-    struct sockaddr_in client_address;          /* Client address */
-    unsigned short server_port;                 /* Server port */
-    unsigned int address_length;                /* Length of address data struct */
-
-	char command_buffer[RCV_BUF_SIZE];           /* Buff to store command from client */
-	char response_buffer[SND_BUF_SIZE];          /* Buff to store response from server */
-
-    size_t byte_count;              // Byte counter
-    size_t response_length;         // Output Length
+	/* Read in local files */
+	for(iFile = 0; iFile < NUM_FILES; iFile++)
+	{
+		char filename[20];
+		sprintf(filename, "song%d", iFile);
+		server_files[iFile] = fopen(filename, "r");
+	}
 
 	/* Assign port number. */
 	server_port = PORT_NUMBER;
