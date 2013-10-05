@@ -7,13 +7,8 @@
 *
 *////////////////////////////////////////////////////////////
 
-#include <stdio.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <openssl/evp.h>
+/* Included libraries */
+#include GTmyMusic.h
 
 /* Constants */
 #define LIST 0
