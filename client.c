@@ -46,8 +46,8 @@ struct sockaddr_in serv_addr;
 char rcv_buffer[RCVBUFSIZE];
 char send_buffer[SNDBUFSIZE];
 
-char* server_ip = "127.0.0.1"; 		// temp
-unsigned short server_port = 2013; 	// temp
+char* server_ip = "127.0.0.1"; 		// Local Server IP Address
+unsigned short server_port = 2013; 	// Server Port Number
 
 FILE* local_files[NUM_FILES];
 char* local_filenames[NUM_FILES];
