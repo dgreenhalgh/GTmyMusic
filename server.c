@@ -14,7 +14,7 @@
 #define RCV_BUF_SIZE 	512     /* The receive buffer size */
 #define SND_BUF_SIZE 	512     /* The send buffer size */
 #define BUFFER_SIZE		10 		/* The command can be 10 characters long. */
-#define PORT_NUMBER 	1500	/* Server port number */
+#define PORT_NUMBER 	2013	/* Server port number */
 #define MAX_PENDING 	5		/* Maximum outstanding connection requests. */
 
 #define NUM_FILES 10
