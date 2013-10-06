@@ -45,6 +45,7 @@ size_t response_length;         // Output Length
 
 int iFile;
 FILE* server_files[NUM_FILES];
+char* server_filenames[NUM_FILES];
 
 /* 
  * The main function. 
@@ -56,6 +57,8 @@ int main(int argc, char *argv[])
 	{
 		char filename[20];
 		sprintf(filename, "song%d", iFile);
+
+		server_filenames[iFile] = filename;
 		server_files[iFile] = fopen(filename, "r");
 	}
 

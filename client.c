@@ -49,6 +49,7 @@ char* server_ip = "127.0.0.1"; 		// temp
 unsigned short server_port = 2013; 	// temp
 
 FILE* local_files[NUM_FILES];
+char* local_filenames[NUM_FILES];
 
 /*
  * The main function
@@ -60,6 +61,8 @@ int main(int argc, char *argv[])
 	{
 		char filename[20];
 		sprintf(filename, "song%d", iFile);
+
+		local_filenames[iFile] = filename;
 		local_files[iFile] = fopen(filename, "r");
 	}
 
