@@ -31,6 +31,7 @@ int switch_state(int);
 void print_main_menu_options();
 void init_connection(char*, unsigned short);
 void create_tcp_socket(int);
+char* recieve_message();
 
 /* Strings.xml */
 char* commands[] = {"LIST", "DIFF", "PULL", "LEAVE"};
@@ -115,15 +116,36 @@ int send_command(int cmd)
 
 	init_connection(server_ip, server_port);
 
-	/* Send command string to the server */
-	size_t num_bytes = send(client_sock, user_command, strlen(user_command), 0); // client sock has no value yet
+	size_t echo_string_len = strlen(user_command);
 
-	if((num_bytes < 0) || (num_bytes != strlen(user_command)))
+	/* Send command string to the server */
+	size_t num_bytes = send(client_sock, user_command, echo_string_len, 0); // client sock has no value yet
+
+	if((num_bytes < 0) || (num_bytes != echo_string_len))
 		switch_state(ERROR_STATE);
 
-	//menuInterface(START_STATE);
+	/* Receive command back */
+	unsigned int total_bytes_rcvd = 0;
+
+	fputs("Test code - received: ", stdout);
+
+	while(total_bytes_rcvd < echo_string_len)
+	{
+		char buffer[RCVBUFSIZE];
+		num_bytes = recv(client_sock, buffer, RCVBUFSIZE - 1, 0);
+
+		if(num_bytes <= 0)
+			switch_state(ERROR_STATE);
+		
+		total_bytes_rcvd += num_bytes;
+		buffer[num_bytes] = '\0';
+
+		fputs(buffer, stdout);
+	}
+
 	return cmd;
 }
+
 
 /*
  * Presenter for the command interface
@@ -139,6 +161,9 @@ int switch_state(int state)
 		print_main_menu_options();
 		
 		send_command(getchar() + ASCII_CORRECTOR); 
+
+		close(client_sock);
+
 	}
 	else if(state = ERROR_STATE)
 	{
