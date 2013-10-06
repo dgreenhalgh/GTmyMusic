@@ -17,8 +17,8 @@ ifeq ($(OS), SunOS)
 
 all: client server 
 
-client: client.c
-	$(CC) client.c -o musicClient
+client: client.c 
+	$(CC) client.c -o musicClient -include GTmyMusic.h
 
 server: server.c
 	$(CC) server.c -o musicServer -lcrypto
