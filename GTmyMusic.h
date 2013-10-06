@@ -23,19 +23,19 @@
 
 	/* Message Structures */
 	typedef struct list_message {
-
+		int id;
 	};
 
 	typedef struct diff_message {
-
+		int id;
 	};
 
 	typedef struct pull_message {
-
+		int id;
 	};
 
 	typedef struct leave_message {
-
+		int id;
 	};
 
 	/* Other stuff */

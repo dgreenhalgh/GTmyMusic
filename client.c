@@ -8,7 +8,7 @@
 *////////////////////////////////////////////////////////////
 
 /* Included libraries */
-#include GTmyMusic.h
+#include "GTmyMusic.h"
 
 /* Constants */
 #define LIST 0
@@ -16,6 +16,7 @@
 #define PULL 2
 #define LEAVE 3
 #define START_STATE 100
+#define TRANSITION_STATE 200
 #define ERROR_STATE -1
 
 #define ASCII_CORRECTOR (-49)
@@ -68,6 +69,7 @@ int main(int argc, char *argv[])
 		/* Command line interface */
 		switch_state(START_STATE);
 
+		switch_state(TRANSITION_STATE);
 	}
 	else if(argc == 2)
 	{
@@ -92,6 +94,8 @@ int main(int argc, char *argv[])
 		{
 			printf("%s", bad_command);
 		}
+
+		switch_state(TRANSITION_STATE);
 	}
 	else
 	{
@@ -119,6 +123,7 @@ int send_command(int cmd)
 		switch_state(ERROR_STATE);
 
 	//menuInterface(START_STATE);
+
 	return cmd;
 }
 
@@ -133,6 +138,12 @@ int switch_state(int state)
 	if(state == START_STATE)
 	{
 		printf("Welcome!\n");
+		print_main_menu_options();
+		
+		send_command(getchar() + ASCII_CORRECTOR); 
+	}
+	else if(state = TRANSITION_STATE)
+	{
 		print_main_menu_options();
 		
 		send_command(getchar() + ASCII_CORRECTOR); 

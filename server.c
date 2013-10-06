@@ -8,7 +8,7 @@
 *////////////////////////////////////////////////////////////
 
 /* Included libraries */
-#include GTmyMusic.h
+#include "GTmyMusic.h"
 
 /* Macros */
 #define RCV_BUF_SIZE 	512     /* The receive buffer size */
