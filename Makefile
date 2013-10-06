@@ -21,7 +21,7 @@ client: client.c
 	$(CC) client.c -o musicClient -include GTmyMusic.h
 
 server: server.c
-	$(CC) server.c -o musicServer -lcrypto
+	$(CC) server.c -o musicServer -include GTmyMusic.h -lcrypto
 
 clean:
 	    rm -f client server *.o
