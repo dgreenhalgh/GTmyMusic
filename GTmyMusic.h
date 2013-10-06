@@ -20,6 +20,10 @@
 	#include <openssl/evp.h>    /* for OpenSSL EVP digest libraries/SHA256 */
 	#include <pthread.h>		/* for parallel processing */
 
+	/* Macros */
+	#define RCV_BUF_SIZE 	512     /* The receive buffer size */
+	#define SND_BUF_SIZE 	512     /* The send buffer size */
+
 
 	/* Message Structures */
 	typedef struct {

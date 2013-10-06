@@ -9,6 +9,7 @@
 
 /* Included libraries */
 #include "GTmyMusic.h"
+#include "client.h"
 
 /* Constants */
 #define LIST 0
@@ -20,17 +21,8 @@
 
 #define ASCII_CORRECTOR (-49)
 
-#define RCVBUFSIZE 512		    /* The receive buffer size */
-#define SNDBUFSIZE 512		    /* The send buffer size */
-
 #define NUM_FILES 10
 
-/* Function pointers */
-int send_command(int);
-int switch_state(int);
-void print_main_menu_options();
-void init_connection(char*, unsigned short);
-void create_tcp_socket(int);
 
 /* Strings.xml */
 char* commands[] = {"LIST", "DIFF", "PULL", "LEAVE"};
