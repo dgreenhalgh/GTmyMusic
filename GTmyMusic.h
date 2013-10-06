@@ -22,22 +22,28 @@
 
 
 	/* Message Structures */
-	typedef struct list_message {
+	typedef struct {
+		char* command_name;
+		char* server_filenames[];
+	} list_message;
 
-	};
+	typedef struct {
+		char* command_name;
+		char* server_filenames[];
+	} diff_message;
 
-	typedef struct diff_message {
+	typedef struct {
+		char* command_name;
+		char* server_filenames[];
+	} pull_message_1;
 
-	};
+	typedef struct {
+		char* command_name;
+		FILE* server_files;
+	} pull_message_2;
 
-	typedef struct pull_message {
-
-	};
-
-	typedef struct leave_message {
-
-	};
-
-	/* Other stuff */
+	typedef struct {
+		char* command_name;
+	} leave_message;
 
 #endif
