@@ -29,6 +29,7 @@ int diff();
 int pull();
 int leave();
 size_t get_filenames_length(char*[]);
+char* serialize_filenames(char*[]);
 
 
 int server_socket;                          /* Server Socket */
@@ -141,6 +142,7 @@ int list()
 	strcpy(new_list_message.command_name, "LIST");
 	new_list_message.filenames_length = get_filenames_length(server_filenames);
 
+
 	return(0);
 }
 
@@ -176,6 +178,9 @@ int leave()
 	return(0);
 }
 
+/*
+ * Returns the number of bytes in the list of filenames on the server
+ */
 size_t get_filenames_length(char* filenames[])
 {
 	size_t fn_length = 0;
@@ -184,4 +189,17 @@ size_t get_filenames_length(char* filenames[])
 		fn_length += sizeof(filenames[iFilename]);
 
 	return fn_length;
+}
+
+char* serialize_filenames(char* filenames[])
+{
+	char* spaghetti = "";
+	int iFilename;
+	for(iFilename = 0; iFilename < get_filenames_length(filenames); iFilename++)
+	{
+		spaghetti = malloc(strlen(spaghetti)+strlen(filenames[iFilename])+1);
+		strcat(spaghetti, filenames[iFilename]);
+	}
+
+	return spaghetti;
 }
