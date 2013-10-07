@@ -25,25 +25,25 @@
 	typedef struct {
 		char* command_name;
 		size_t filenames_length;
-		char* server_filenames[];
+		char* serialized_server_filenames;
 	} list_message;
 
 	typedef struct {
 		char* command_name;
 		size_t filenames_length;
-		char* server_filenames[];
+		char* serialized_server_filenames;
 	} diff_message;
 
 	typedef struct {
 		char* command_name;
 		size_t filenames_length;
-		char* server_filenames[];
+		char* serialized_server_filenames;
 	} pull_message_1;
 
 	typedef struct {
 		char* command_name;
 		size_t filenames_length;
-		char* client_filenames[];
+		char* serialized_client_filenames;
 	} pull_message_2;
 
 	typedef struct {
