@@ -34,7 +34,7 @@ void create_tcp_socket(int);
 char* recieve_message();
 
 /* Strings.xml */
-char* commands[] = {"LIST", "DIFF", "PULL", "LEAVE"};
+char* commands[] = {"LIST", "DIFF", "PULL", "LEAF"};
 
 const char* bad_command = "Command not recognized, exiting now.\n";
 const char* bad_number_of_commands = "Improper number of args, exiting now.\nCommand line menu usage: ./musicClient\nDirect command usage: ./musicClient <command>\n";
@@ -127,7 +127,16 @@ int send_command(int cmd)
 	/* Receive command back */
 	unsigned int total_bytes_rcvd = 0;
 
-	fputs("Test code - received: ", stdout);
+	// Note: all commands are 4 chars in length
+	size_t command_length = sizeof(char)*4;
+	size_t num_command_bytes;
+
+	/* Read command name */
+	char command_name_buffer[sizeof(char)*4];
+	while(total_bytes_rcvd < command_length)
+	{
+		num_command_bytes = recv(client_sock, command_name_buffer, command_length, 0);
+	}
 
 	while(total_bytes_rcvd < echo_string_len)
 	{
@@ -140,7 +149,7 @@ int send_command(int cmd)
 		total_bytes_rcvd += num_bytes;
 		buffer[num_bytes] = '\0';
 
-		fputs(buffer, stdout);
+		fputs(buffer, stdout); // temp
 	}
 
 	return cmd;
@@ -202,7 +211,6 @@ void init_connection(char* serv_ip, unsigned short serv_port)
 
 	if(ret_val <= 0)
 		switch_state(ERROR_STATE);
-
 
 	serv_addr.sin_port = htons(serv_port);
 
