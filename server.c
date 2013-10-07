@@ -141,8 +141,11 @@ int list()
 	list_message new_list_message;
 	strcpy(new_list_message.command_name, "LIST");
 	new_list_message.filenames_length = get_filenames_length(server_filenames);
+	new_list_message.serialized_server_filenames = serialize_filenames(server_filenames);
 
-
+	send(server_socket, &new_list_message.command_name, sizeof(new_list_message.command_name), 0);
+	send(server_socket, &new_list_message.filenames_length, sizeof(new_list_message.filenames_length), 0);
+	send(server_socket, &new_list_message.serialized_server_filenames, sizeof(new_list_message.serialized_server_filenames), 0);
 	return(0);
 }
 
