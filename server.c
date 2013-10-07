@@ -14,7 +14,7 @@
 #define RCV_BUF_SIZE 	512     /* The receive buffer size */
 #define SND_BUF_SIZE 	512     /* The send buffer size */
 #define BUFFER_SIZE		10 		/* The command can be 10 characters long. */
-#define PORT_NUMBER 	1500	/* Server port number */
+#define PORT_NUMBER 	2013	/* Server port number */
 #define MAX_PENDING 	5		/* Maximum outstanding connection requests. */
 
 #define NUM_FILES 10
@@ -22,13 +22,13 @@
 /* Constants */
 static const char* example = "Char Star";
 
-/* Function pointers */
+/* Function Prototypes */
 /* Params will need to be fleshed out once we define them */
 int list();
 int diff();
 int pull();
 int leave();
-
+void handle_tcp_client(int);
 
 int server_socket;                          /* Server Socket */
 int client_socket;                          /* Client Socket */
@@ -40,7 +40,7 @@ unsigned int address_length;                /* Length of address data struct */
 char command_buffer[RCV_BUF_SIZE];           /* Buff to store command from client */
 char response_buffer[SND_BUF_SIZE];          /* Buff to store response from server */
 
-size_t byte_count;              // Byte counter
+size_t byte_count_in;              // Byte counter
 size_t response_length;         // Output Length
 
 int iFile;
@@ -81,6 +81,10 @@ int main(int argc, char *argv[])
         printf("bind() failed");
     }
 
+    /* Announce server address for clients. */
+    printf("Server IP Address: %s\n", inet_ntoa(server_address.sin_addr));
+    printf("Server Port Number: %d\n", (int) ntohs(server_address.sin_port));
+
 	/* Listen for incoming connections. */
     if (listen(server_socket, MAX_PENDING) < 0) {
         printf("listen() failed");
@@ -96,36 +100,43 @@ int main(int argc, char *argv[])
             printf("accept() failed");
         }
 
-        /* Extract the command from the packet and store in command_buffer */
-        byte_count = recv(server_socket, command_buffer, BUFFER_SIZE - 1, 0);
-        if (byte_count < 0) {
-            printf("recv() failed");
-        }
-        else if (byte_count == 0) {
-            printf("recv()", "connection closed prematurely");
-        }
+        printf("DEBUG: accepted a connection\n");
 
-        /* Interpret and execute command. */
-        /* TODO */
-
-        /* Return response to client */
-        response_length = strlen(response_buffer);
-
-        byte_count = send(server_socket, response_buffer, response_length, 0);
-        if (byte_count < 0) {
-            printf("send() failed");
-        }
-        else if (byte_count != response_length) {
-            printf("send()", "sent unexpected number of bytes");
-        }
-
+        handle_tcp_client(client_socket);
     }
 
-    close(client_socket);
     return(1);
 }
 
 /* Other functions: */
+
+void handle_tcp_client(int client_socket) {
+    /* Extract the command from the packet and store in command_buffer */
+    byte_count_in = recv(server_socket, command_buffer, BUFFER_SIZE - 1, 0);
+    if (byte_count_in < 0) {
+        printf("recv() failed");
+    }
+    else if (byte_count_in == 0) {
+        printf("recv()", "connection closed prematurely");
+    }
+
+    /* Interpret and execute command. */
+    while (byte_count_in > 0) { // 0 indicates end of stream
+
+        // Echo message back to client
+        size_t byte_count_out = send(client_socket, response_buffer, byte_count_in, 0);
+        if (byte_count_out < 0)
+          printf("send() failed");
+        else if (byte_count_out != byte_count_in)
+          printf("send()", "sent unexpected number of bytes");
+        // See if there is more data to receive
+        byte_count_in = recv(client_socket, response_buffer, response_length, 0);
+        if (byte_count_in < 0)
+          printf("recv() failed");
+    }
+
+    close(client_socket);
+}
 
 /* 
  * Command: LIST

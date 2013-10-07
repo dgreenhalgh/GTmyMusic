@@ -30,7 +30,7 @@ int send_command(int);
 int switch_state(int);
 void print_main_menu_options();
 void init_connection(char*, unsigned short);
-void create_tcp_socket(int);
+void create_tcp_socket(int*);
 char* recieve_message();
 
 /* Strings.xml */
@@ -46,8 +46,8 @@ struct sockaddr_in serv_addr;
 char rcv_buffer[RCVBUFSIZE];
 char send_buffer[SNDBUFSIZE];
 
-char* server_ip = "127.0.0.1"; 		// temp
-unsigned short server_port = 2013; 	// temp
+char* server_ip = "127.0.0.1"; 		// Local Server IP Address
+unsigned short server_port = 2013; 	// Server Port Number
 
 FILE* local_files[NUM_FILES];
 char* local_filenames[NUM_FILES];
@@ -200,7 +200,7 @@ void init_connection(char* serv_ip, unsigned short serv_port)
 	memset(&send_buffer, 0, SNDBUFSIZE);
 	memset(&rcv_buffer, 0, RCVBUFSIZE);
 
-	create_tcp_socket(client_sock); // client_sock has no value yet
+	create_tcp_socket(&client_sock); // client_sock has no value yet
 
 	/* Construct the server address structure */
 	memset(&serv_addr, 0, sizeof(serv_addr));
@@ -224,9 +224,9 @@ void init_connection(char* serv_ip, unsigned short serv_port)
  *
  * Param: The client socket
  */
-void create_tcp_socket(int client_socket)
+void create_tcp_socket(int* client_socket)
 {
-	client_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	*client_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
 	if(client_socket < 0)
 		switch_state(ERROR_STATE);
