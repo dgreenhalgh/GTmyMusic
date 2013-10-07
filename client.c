@@ -40,7 +40,7 @@ const char* bad_command = "Command not recognized, exiting now.\n";
 const char* bad_number_of_commands = "Improper number of args, exiting now.\nCommand line menu usage: ./musicClient\nDirect command usage: ./musicClient <command>\n";
 
 /* Socket info */
-int client_sock, iFile, num_files; // no camel case
+int client_sock, i_File, num_files; // no camel case
 struct sockaddr_in serv_addr;
 
 char rcv_buffer[RCVBUFSIZE];

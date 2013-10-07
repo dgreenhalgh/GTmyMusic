@@ -228,9 +228,9 @@ int pull()
 	send(server_socket, &new_pull_message_3.command_name, sizeof(new_pull_message_3.command_name), 0);
 	send(server_socket, &new_pull_message_3.files_length, sizeof(new_pull_message_3.files_length), 0);
 
-	int i_file;
-	for(i_file = 0; i_file < NUM_FILES; i_file++)
-		send(server_socket, &new_pull_message_3.server_files[i_file], sizeof(new_pull_message_3.server_files[i_file]), 0);
+	int i_server_file;
+	for(i_server_file = 0; i_server_file < NUM_FILES; i_server_file++)
+		send(server_socket, &new_pull_message_3.server_files[i_server_file], sizeof(new_pull_message_3.server_files[i_server_file]), 0);
 
 	return(0); // unused for now
 }
