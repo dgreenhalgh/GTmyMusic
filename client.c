@@ -23,7 +23,7 @@
 #define RCVBUFSIZE 512		    /* The receive buffer size */
 #define SNDBUFSIZE 512		    /* The send buffer size */
 
-#define NUM_FILES 10
+#define MAX_NUM_FILES 10
 
 /* Function pointers */
 int send_command(int);
@@ -40,7 +40,7 @@ const char* bad_command = "Command not recognized, exiting now.\n";
 const char* bad_number_of_commands = "Improper number of args, exiting now.\nCommand line menu usage: ./musicClient\nDirect command usage: ./musicClient <command>\n";
 
 /* Socket info */
-int client_sock, iFile;
+int client_sock, iFile, num_files; // no camel case
 struct sockaddr_in serv_addr;
 
 char rcv_buffer[RCVBUFSIZE];
@@ -49,8 +49,10 @@ char send_buffer[SNDBUFSIZE];
 char* server_ip = "127.0.0.1"; 		// temp
 unsigned short server_port = 2013; 	// temp
 
-FILE* local_files[NUM_FILES];
-char* local_filenames[NUM_FILES];
+FILE* local_files[MAX_NUM_FILES];
+char* local_filenames[MAX_NUM_FILES];
+
+size_t local_file_lengths[MAX_NUM_FILES]; // replace NUM_FILES
 
 /*
  * The main function
@@ -58,13 +60,18 @@ char* local_filenames[NUM_FILES];
 int main(int argc, char *argv[])
 {
 	/* Read in local files */
-	for(iFile = 0; iFile < NUM_FILES; iFile++)
+	for(iFile = 0; iFile < MAX_NUM_FILES; iFile++)
 	{
 		char filename[20];
 		sprintf(filename, "song%d", iFile);
 
 		local_filenames[iFile] = filename;
 		local_files[iFile] = fopen(filename, "r");
+
+		fseek(local_files[iFile], 0, SEEK_END);
+		local_file_lengths[iFile] = ftell(local_files[iFile]);
+
+		fclose(local_files[iFile]); // maybe?
 	}
 
 	if(argc == 1)
@@ -155,7 +162,6 @@ int send_command(int cmd)
 	return cmd;
 }
 
-
 /*
  * Presenter for the command interface
  *
@@ -231,4 +237,3 @@ void create_tcp_socket(int client_socket)
 	if(client_socket < 0)
 		switch_state(ERROR_STATE);
 }
-
