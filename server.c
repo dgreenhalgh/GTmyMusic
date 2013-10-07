@@ -178,7 +178,9 @@ int diff()
  */
 int pull()
 {
-	return(0);
+	
+
+	return(0); // unused for now
 }
 
 /* 
@@ -188,7 +190,12 @@ int pull()
  */
 int leave()
 {
-	return(0);
+	leave_message new_leave_message;
+	strcpy(new_leave_message.command_name, "LEAF");
+
+	send(server_socket, &new_leave_message.command_name, sizeof(new_leave_message.command_name), 0);
+
+	return(0); // unused for now
 }
 
 /*
