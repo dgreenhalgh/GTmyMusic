@@ -24,23 +24,33 @@
 	/* Message Structures */
 	typedef struct {
 		char* command_name;
+		size_t filenames_length;
 		char* server_filenames[];
 	} list_message;
 
 	typedef struct {
 		char* command_name;
+		size_t filenames_length;
 		char* server_filenames[];
 	} diff_message;
 
 	typedef struct {
 		char* command_name;
+		size_t filenames_length;
 		char* server_filenames[];
 	} pull_message_1;
 
 	typedef struct {
 		char* command_name;
-		FILE* server_files;
+		size_t filenames_length;
+		char* client_filenames[];
 	} pull_message_2;
+
+	typedef struct {
+		char* command_name;
+		size_t files_length;
+		FILE* server_files;
+	} pull_message_3;
 
 	typedef struct {
 		char* command_name;
