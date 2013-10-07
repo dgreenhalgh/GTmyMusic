@@ -197,7 +197,7 @@ int pull()
 	send(server_socket, &new_pull_message_1.serialized_server_filenames, sizeof(new_pull_message_1.serialized_server_filenames), 0);
 
 	/* Pull message 2 */
-	
+
 
 	/* Pull message 3 */
 	pull_message_3 new_pull_message_3;
