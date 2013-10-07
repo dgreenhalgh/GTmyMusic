@@ -52,6 +52,8 @@ unsigned short server_port = 2013; 	// temp
 FILE* local_files[NUM_FILES];
 char* local_filenames[NUM_FILES];
 
+size_t local_file_lengths[NUM_FILES]; // replace NUM_FILES
+
 /*
  * The main function
  */
@@ -65,6 +67,11 @@ int main(int argc, char *argv[])
 
 		local_filenames[iFile] = filename;
 		local_files[iFile] = fopen(filename, "r");
+
+		fseek(local_files[iFile], 0, SEEK_END);
+		local_file_lengths[iFile] = ftell(local_files[iFile]);
+
+		fclose(local_files[iFile]); // maybe?
 	}
 
 	if(argc == 1)

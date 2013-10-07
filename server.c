@@ -30,6 +30,7 @@ int pull();
 int leave();
 size_t get_filenames_length(char*[]);
 char* serialize_filenames(char*[]);
+size_t get_server_files_length(size_t[]);
 
 
 int server_socket;                          /* Server Socket */
@@ -49,6 +50,8 @@ int iFile, num_files;
 FILE* server_files[MAX_NUM_FILES];
 char* server_filenames[MAX_NUM_FILES];
 
+size_t server_file_lengths[MAX_NUM_FILES];
+
 /* 
  * The main function. 
  */
@@ -62,6 +65,11 @@ int main(int argc, char *argv[])
 
 		server_filenames[iFile] = filename;
 		server_files[iFile] = fopen(filename, "r");
+
+		fseek(server_files[iFile], 0, SEEK_END);
+		server_file_lengths[iFile] = ftell(server_files[iFile]);
+
+		fclose(server_files[iFile]); // maybe?
 	}
 
 	num_files = iFile;
@@ -178,7 +186,31 @@ int diff()
  */
 int pull()
 {
+	/* Pull message 1 */
+	pull_message_1 new_pull_message_1;
+	strcpy(new_pull_message_1.command_name, "PLL1");
+	new_pull_message_1.filenames_length = get_filenames_length(server_filenames);
+	new_pull_message_1.serialized_server_filenames = serialize_filenames(server_filenames);
+
+	send(server_socket, &new_pull_message_1.command_name, sizeof(new_pull_message_1.command_name), 0);
+	send(server_socket, &new_pull_message_1.filenames_length, sizeof(new_pull_message_1.filenames_length), 0);
+	send(server_socket, &new_pull_message_1.serialized_server_filenames, sizeof(new_pull_message_1.serialized_server_filenames), 0);
+
+	/* Pull message 2 */
 	
+
+	/* Pull message 3 */
+	pull_message_3 new_pull_message_3;
+	strcpy(new_pull_message_3.command_name, "PLL3");
+	new_pull_message_3.files_length = get_server_files_length(server_file_lengths);
+	// pull_message_3.server_files is sent below
+
+	send(server_socket, &new_pull_message_3.command_name, sizeof(new_pull_message_3.command_name), 0);
+	send(server_socket, &new_pull_message_3.files_length, sizeof(new_pull_message_3.files_length), 0);
+
+	int i_file;
+	for(i_file = 0; i_file < num_files; i_file++)
+		send(server_socket, &new_pull_message_3.server_files[i_file], sizeof(new_pull_message_3.server_files[i_file]), 0);
 
 	return(0); // unused for now
 }
@@ -204,9 +236,9 @@ int leave()
 size_t get_filenames_length(char* filenames[])
 {
 	size_t fn_length = 0;
-	int iFilename;
-	for (iFilename = 0; iFilename < num_files; iFilename++)
-		fn_length += sizeof(filenames[iFilename]);
+	int i_filename;
+	for (i_filename = 0; i_filename < num_files; i_filename++)
+		fn_length += sizeof(filenames[i_filename]);
 
 	return fn_length;
 }
@@ -214,12 +246,24 @@ size_t get_filenames_length(char* filenames[])
 char* serialize_filenames(char* filenames[])
 {
 	char* spaghetti = "";
-	int iFilename;
-	for(iFilename = 0; iFilename < get_filenames_length(filenames); iFilename++)
+	int i_filename;
+	for(i_filename = 0; i_filename < get_filenames_length(filenames); i_filename++)
 	{
-		spaghetti = malloc(strlen(spaghetti)+strlen(filenames[iFilename])+1);
-		strcat(spaghetti, filenames[iFilename]);
+		spaghetti = malloc(strlen(spaghetti)+strlen(filenames[i_filename])+1);
+		strcat(spaghetti, filenames[i_filename]);
 	}
 
 	return spaghetti;
+}
+
+size_t get_server_files_length(size_t server_file_length_list[])
+{
+	size_t total_server_files_length = 0;
+	int i_file_length;
+	for(i_file_length = 0; i_file_length < num_files; i_file_length++)
+	{
+		total_server_files_length += server_file_length_list[i_file_length];
+	}
+
+	return total_server_files_length;
 }
