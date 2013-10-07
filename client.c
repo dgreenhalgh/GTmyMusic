@@ -40,7 +40,7 @@ const char* bad_command = "Command not recognized, exiting now.\n";
 const char* bad_number_of_commands = "Improper number of args, exiting now.\nCommand line menu usage: ./musicClient\nDirect command usage: ./musicClient <command>\n";
 
 /* Socket info */
-int client_sock, iFile, num_files; // no camel case
+int client_sock, i_File, num_files; // no camel case
 struct sockaddr_in serv_addr;
 
 char rcv_buffer[RCVBUFSIZE];
@@ -60,18 +60,18 @@ size_t local_file_lengths[MAX_NUM_FILES]; // replace NUM_FILES
 int main(int argc, char *argv[])
 {
 	/* Read in local files */
-	for(iFile = 0; iFile < MAX_NUM_FILES; iFile++)
+	for(i_File = 0; i_File < MAX_NUM_FILES; i_File++)
 	{
 		char filename[20];
-		sprintf(filename, "song%d", iFile);
+		sprintf(filename, "song%d", i_File);
 
-		local_filenames[iFile] = filename;
-		local_files[iFile] = fopen(filename, "r");
+		local_filenames[i_File] = filename;
+		local_files[i_File] = fopen(filename, "r");
 
-		fseek(local_files[iFile], 0, SEEK_END);
-		local_file_lengths[iFile] = ftell(local_files[iFile]);
+		fseek(local_files[i_File], 0, SEEK_END);
+		local_file_lengths[i_File] = ftell(local_files[i_File]);
 
-		fclose(local_files[iFile]); // maybe?
+		fclose(local_files[i_File]); // maybe?
 	}
 
 	if(argc == 1)
