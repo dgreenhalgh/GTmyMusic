@@ -14,7 +14,7 @@
 #define RCV_BUF_SIZE 	512     /* The receive buffer size */
 #define SND_BUF_SIZE 	512     /* The send buffer size */
 #define BUFFER_SIZE		10 		/* The command can be 10 characters long. */
-#define PORT_NUMBER 	1500	/* Server port number */
+#define PORT_NUMBER 	2013	/* Server port number */
 #define MAX_PENDING 	5		/* Maximum outstanding connection requests. */
 
 #define NUM_FILES 10
@@ -52,23 +52,36 @@ char* server_filenames[NUM_FILES];
  */
 int main(int argc, char *argv[])
 {
-	/* Read in local files */
-	for(iFile = 0; iFile < NUM_FILES; iFile++)
-	{
-		char filename[20];
-		sprintf(filename, "song%d", iFile);
 
-		server_filenames[iFile] = filename;
-		server_files[iFile] = fopen(filename, "r");
-	}
+    ///* Read in local files */
+    //printf("Reading local files...\n");
+	//for(iFile = 0; iFile < NUM_FILES; iFile++)
+	//{
+	//	char filename[20];
+	//	sprintf(filename, "song%d", iFile);
+
+	//	server_filenames[iFile] = filename;
+	//	server_files[iFile] = fopen(filename, "r");
+	//}
 
 	/* Assign port number. */
 	server_port = PORT_NUMBER;
 
     /* Create new TCP Socket for incoming requests. */
-    if ((server_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-        printf("socket() failed");
-    }
+    printf("Creating a new TCP Socket for incoming requests...\n");
+    printf("debug\n");
+    server_socket = socket(AF_INET, SOCK_STREAM, 0);
+    printf("Server socket:\n");
+    printf("%d", server_socket);
+    printf("come on!");
+    //printf("%d", server_socket);
+    //if ((server_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+    //    printf("socket() failed");
+    //}
+    //else {
+    //    printf("Socket Created");
+    //}
+    printf("DEBUG");
 
     /* Construct local address structure. */
     memset(&server_address, 0, sizeof(server_address));     // zero out structure
@@ -85,6 +98,9 @@ int main(int argc, char *argv[])
     if (listen(server_socket, MAX_PENDING) < 0) {
         printf("listen() failed");
     }
+    else {
+        printf("Listening for incoming connections...");
+    }
 
     /* Loop server forever. */
     while(1){
@@ -94,6 +110,9 @@ int main(int argc, char *argv[])
         client_socket = accept(server_socket, (struct sockaddr *) &client_address, &address_length);
         if (client_socket < 0) {
             printf("accept() failed");
+        }
+        else {
+            printf("Accepting incoming connections.");
         }
 
         /* Extract the command from the packet and store in command_buffer */
