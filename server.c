@@ -17,7 +17,7 @@
 #define PORT_NUMBER 	1500	/* Server port number */
 #define MAX_PENDING 	5		/* Maximum outstanding connection requests. */
 
-#define NUM_FILES 10
+#define MAX_NUM_FILES 10
 
 /* Constants */
 static const char* example = "Char Star";
@@ -28,6 +28,7 @@ int list();
 int diff();
 int pull();
 int leave();
+size_t get_filenames_length(char*[]);
 
 
 int server_socket;                          /* Server Socket */
@@ -43,9 +44,9 @@ char response_buffer[SND_BUF_SIZE];          /* Buff to store response from serv
 size_t byte_count;              // Byte counter
 size_t response_length;         // Output Length
 
-int iFile;
-FILE* server_files[NUM_FILES];
-char* server_filenames[NUM_FILES];
+int iFile, num_files;
+FILE* server_files[MAX_NUM_FILES];
+char* server_filenames[MAX_NUM_FILES];
 
 /* 
  * The main function. 
@@ -53,7 +54,7 @@ char* server_filenames[NUM_FILES];
 int main(int argc, char *argv[])
 {
 	/* Read in local files */
-	for(iFile = 0; iFile < NUM_FILES; iFile++)
+	for(iFile = 0; iFile < MAX_NUM_FILES; iFile++)
 	{
 		char filename[20];
 		sprintf(filename, "song%d", iFile);
@@ -61,6 +62,8 @@ int main(int argc, char *argv[])
 		server_filenames[iFile] = filename;
 		server_files[iFile] = fopen(filename, "r");
 	}
+
+	num_files = iFile;
 
 	/* Assign port number. */
 	server_port = PORT_NUMBER;
@@ -134,6 +137,10 @@ int main(int argc, char *argv[])
  */
 int list()
 {
+	list_message new_list_message;
+	strcpy(new_list_message.command_name, "LIST");
+	new_list_message.filenames_length = get_filenames_length(server_filenames);
+
 	return(0);
 }
 
@@ -167,4 +174,14 @@ int pull()
 int leave()
 {
 	return(0);
+}
+
+size_t get_filenames_length(char* filenames[])
+{
+	size_t fn_length = 0;
+	int iFilename;
+	for (iFilename = 0; iFilename < num_files; iFilename++)
+		fn_length += sizeof(filenames[iFilename]);
+
+	return fn_length;
 }
