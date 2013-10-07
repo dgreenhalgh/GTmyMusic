@@ -146,7 +146,8 @@ int list()
 	send(server_socket, &new_list_message.command_name, sizeof(new_list_message.command_name), 0);
 	send(server_socket, &new_list_message.filenames_length, sizeof(new_list_message.filenames_length), 0);
 	send(server_socket, &new_list_message.serialized_server_filenames, sizeof(new_list_message.serialized_server_filenames), 0);
-	return(0);
+	
+	return(0); // unused for now
 }
 
 /* 
@@ -157,7 +158,16 @@ int list()
  */
 int diff()
 {
-	return(0);
+	diff_message new_diff_message;
+	strcpy(new_diff_message.command_name, "DIFF");
+	new_diff_message.filenames_length = get_filenames_length(server_filenames);
+	new_diff_message.serialized_server_filenames = serialize_filenames(server_filenames);
+
+	send(server_socket, &new_diff_message.command_name, sizeof(new_diff_message.command_name), 0);
+	send(server_socket, &new_diff_message.filenames_length, sizeof(new_diff_message.filenames_length), 0);
+	send(server_socket, &new_diff_message.serialized_server_filenames, sizeof(new_diff_message.serialized_server_filenames), 0);
+
+	return(0); // unused for now
 }
 
 /* 
