@@ -15,14 +15,14 @@ ifeq ($(OS), SunOS)
 	LDFLAGS=-lsocket -lnsl
     endif
 
-all: client server 
+all: musicClient musicServer
 
-client: client.c 
+musicClient: client.c 
 	$(CC) client.c -o musicClient -include GTmyMusic.h
 
-server: server.c
+musicServer: server.c
 	$(CC) server.c -o musicServer -include GTmyMusic.h -lcrypto
 
 clean:
-	    rm -f client server *.o
+	    rm -f musicClient musicServer
 

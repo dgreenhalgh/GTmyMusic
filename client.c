@@ -59,20 +59,20 @@ size_t local_file_lengths[MAX_NUM_FILES]; // replace NUM_FILES
  */
 int main(int argc, char *argv[])
 {
-	/* Read in local files */
-	for(iFile = 0; iFile < MAX_NUM_FILES; iFile++)
-	{
-		char filename[20];
-		sprintf(filename, "song%d", iFile);
+	// /* Read in local files */
+	// for(iFile = 0; iFile < MAX_NUM_FILES; iFile++)
+	// {
+	// 	char filename[20];
+	// 	sprintf(filename, "song%d", iFile);
 
-		local_filenames[iFile] = filename;
-		local_files[iFile] = fopen(filename, "r");
+	// 	local_filenames[iFile] = filename;
+	// 	local_files[iFile] = fopen(filename, "r");
 
-		fseek(local_files[iFile], 0, SEEK_END);
-		local_file_lengths[iFile] = ftell(local_files[iFile]);
+	// 	fseek(local_files[iFile], 0, SEEK_END);
+	// 	local_file_lengths[iFile] = ftell(local_files[iFile]);
 
-		fclose(local_files[iFile]); // maybe?
-	}
+	// 	fclose(local_files[iFile]); // maybe?
+	// }
 
 	if(argc == 1)
 	{

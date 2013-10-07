@@ -58,32 +58,32 @@ size_t server_file_lengths[NUM_FILES];
 int main(int argc, char *argv[])
 {
 
-    /* Read in local files */
-    printf("Reading local files...\n");
-	for(iFile = 0; iFile < NUM_FILES; iFile++)
-	{
-		char filename[20];
-		sprintf(filename, "song%d", iFile);
+ //    /* Read in local files */
+ //    printf("Reading local files...\n");
+	// for(iFile = 0; iFile < NUM_FILES; iFile++)
+	// {
+	// 	char filename[20];
+	// 	sprintf(filename, "song%d", iFile);
 
-		server_filenames[iFile] = filename;
-		server_files[iFile] = fopen(filename, "r");
+	// 	server_filenames[iFile] = filename;
+	// 	server_files[iFile] = fopen(filename, "r");
 
-		fseek(server_files[iFile], 0, SEEK_END);
-		server_file_lengths[iFile] = ftell(server_files[iFile]);
+	// 	fseek(server_files[iFile], 0, SEEK_END);
+	// 	server_file_lengths[iFile] = ftell(server_files[iFile]);
 
-		fclose(server_files[iFile]); // maybe?
-	}
+	// 	fclose(server_files[iFile]); // maybe?
+	// }
 
 	/* Assign port number. */
 	server_port = PORT_NUMBER;
 
     /* Create new TCP Socket for incoming requests. */
     printf("Creating a new TCP Socket for incoming requests...\n");
-    printf("debug\n");
-    server_socket = socket(AF_INET, SOCK_STREAM, 0);
+    printf("debugging\n");
+    server_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     printf("Server socket:\n");
     printf("%d", server_socket);
-    printf("come on!");
+    printf("come on!\n");
     //printf("%d", server_socket);
     //if ((server_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     //    printf("socket() failed");
@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
     //else {
     //    printf("Socket Created");
     //}
-    printf("DEBUG");
+    printf("DEBUG\n");
 
     /* Construct local address structure. */
     memset(&server_address, 0, sizeof(server_address));     // zero out structure
@@ -101,37 +101,40 @@ int main(int argc, char *argv[])
 
     /* Bind to local address structure. */
     if (bind(server_socket, (struct sockaddr*) &server_address, sizeof(server_address)) < 0) {
-        printf("bind() failed");
+        printf("bind() failed\n");
     }
 
 	/* Listen for incoming connections. */
     if (listen(server_socket, MAX_PENDING) < 0) {
-        printf("listen() failed");
+        printf("listen() failed\n");
     }
     else {
-        printf("Listening for incoming connections...");
+        printf("Listening for incoming connections...\n");
     }
 
     /* Loop server forever. */
     while(1){
+        printf("looping...\n");
+
     	address_length = sizeof(client_address);
 
     	/* Accept incoming connection. */
         client_socket = accept(server_socket, (struct sockaddr *) &client_address, &address_length);
+
         if (client_socket < 0) {
-            printf("accept() failed");
+            printf("accept() failed\n");
         }
         else {
-            printf("Accepting incoming connections.");
+            printf("Accepting incoming connections.\n");
         }
 
         /* Extract the command from the packet and store in command_buffer */
         byte_count = recv(server_socket, command_buffer, BUFFER_SIZE - 1, 0);
         if (byte_count < 0) {
-            printf("recv() failed");
+            printf("recv() failed\n");
         }
         else if (byte_count == 0) {
-            printf("recv()", "connection closed prematurely");
+            printf("recv()", "connection closed prematurely\n");
         }
 
         /* Interpret and execute command. */
@@ -142,10 +145,10 @@ int main(int argc, char *argv[])
 
         byte_count = send(server_socket, response_buffer, response_length, 0);
         if (byte_count < 0) {
-            printf("send() failed");
+            printf("send() failed\n");
         }
         else if (byte_count != response_length) {
-            printf("send()", "sent unexpected number of bytes");
+            printf("send()", "sent unexpected number of bytes\n");
         }
 
     }
