@@ -17,7 +17,7 @@
 #define PORT_NUMBER 	1500	/* Server port number */
 #define MAX_PENDING 	5		/* Maximum outstanding connection requests. */
 
-#define MAX_NUM_FILES 10
+#define NUM_FILES 10
 
 /* Constants */
 static const char* example = "Char Star";
@@ -46,11 +46,11 @@ char response_buffer[SND_BUF_SIZE];          /* Buff to store response from serv
 size_t byte_count;              // Byte counter
 size_t response_length;         // Output Length
 
-int iFile, num_files;
-FILE* server_files[MAX_NUM_FILES];
-char* server_filenames[MAX_NUM_FILES];
+int iFile;
+FILE* server_files[NUM_FILES];
+char* server_filenames[NUM_FILES];
 
-size_t server_file_lengths[MAX_NUM_FILES];
+size_t server_file_lengths[NUM_FILES];
 
 /* 
  * The main function. 
@@ -58,7 +58,7 @@ size_t server_file_lengths[MAX_NUM_FILES];
 int main(int argc, char *argv[])
 {
 	/* Read in local files */
-	for(iFile = 0; iFile < MAX_NUM_FILES; iFile++)
+	for(iFile = 0; iFile < NUM_FILES; iFile++)
 	{
 		char filename[20];
 		sprintf(filename, "song%d", iFile);
@@ -71,8 +71,6 @@ int main(int argc, char *argv[])
 
 		fclose(server_files[iFile]); // maybe?
 	}
-
-	num_files = iFile;
 
 	/* Assign port number. */
 	server_port = PORT_NUMBER;
@@ -209,7 +207,7 @@ int pull()
 	send(server_socket, &new_pull_message_3.files_length, sizeof(new_pull_message_3.files_length), 0);
 
 	int i_file;
-	for(i_file = 0; i_file < num_files; i_file++)
+	for(i_file = 0; i_file < NUM_FILES; i_file++)
 		send(server_socket, &new_pull_message_3.server_files[i_file], sizeof(new_pull_message_3.server_files[i_file]), 0);
 
 	return(0); // unused for now
@@ -237,7 +235,7 @@ size_t get_filenames_length(char* filenames[])
 {
 	size_t fn_length = 0;
 	int i_filename;
-	for (i_filename = 0; i_filename < num_files; i_filename++)
+	for (i_filename = 0; i_filename < NUM_FILES; i_filename++)
 		fn_length += sizeof(filenames[i_filename]);
 
 	return fn_length;
@@ -260,7 +258,7 @@ size_t get_server_files_length(size_t server_file_length_list[])
 {
 	size_t total_server_files_length = 0;
 	int i_file_length;
-	for(i_file_length = 0; i_file_length < num_files; i_file_length++)
+	for(i_file_length = 0; i_file_length < NUM_FILES; i_file_length++)
 	{
 		total_server_files_length += server_file_length_list[i_file_length];
 	}
