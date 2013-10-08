@@ -80,9 +80,7 @@ int main(int argc, char *argv[])
 			{
 	    		local_filenames[count] = ent->d_name;
 	    		count++;
-	    		printf("%s\n", ent->d_name);
     		}
-    		// figure out how to ignore '.' and '..'
 		}
 	}
 
@@ -242,7 +240,10 @@ void init_connection(char* serv_ip, unsigned short serv_port)
 
 	/* Establish connection */
 	if(connect(client_sock, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
+	{
+		printf("conn fail\n");
 		switch_state(ERROR_STATE);
+	}
 
 	printf("Establish connection\n");
 }

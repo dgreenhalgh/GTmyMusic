@@ -87,7 +87,6 @@ int main(int argc, char *argv[])
 			{
 				server_filenames[count] = ent->d_name;
 				count++;
-    			printf ("%s\n", ent->d_name);
     		}
 		}
 	}
@@ -187,25 +186,32 @@ void command_handler(void* helper_struct)
 {
     command_handler_helper* p_helper_struct = (command_handler_helper*) helper_struct;
 
-	char command[5];
+	char command[5], trimmed_command[4];
 	recv(p_helper_struct->socket, command, 4, 0); // fix me
 	command[5] = '\0';
 
-	printf("%s\n", command);
+	int i_hack;
+	for(i_hack = 0; i_hack < 4; i_hack)
+		trimmed_command[i_hack] = command[i_hack];
+	
 
-	if(strcmp(command, "LIST") == 0)
+	printf("%s\n", command);
+	printf("%s\n", trimmed_command);
+
+	if(strcmp(trimmed_command, "LIST") == 0)
 	{
+		printf("LISTing\n");
 		list();
 	}
-	else if(strcmp(command, "DIFF") == 0)
+	else if(strcmp(trimmed_command, "DIFF") == 0)
 	{
 		diff();
 	}
-	else if(strcmp(command, "PULL") == 0)
+	else if(strcmp(trimmed_command, "PULL") == 0)
 	{
 		pull();
 	}
-	else if(strcmp(command, "LEAF") == 0)
+	else if(strcmp(trimmed_command, "LEAF") == 0)
 	{
 		leave();
 	}
