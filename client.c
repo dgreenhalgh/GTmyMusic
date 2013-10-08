@@ -30,7 +30,7 @@ int send_command(int);
 int switch_state(int);
 void print_main_menu_options();
 void init_connection(char*, unsigned short);
-void create_tcp_socket(int);
+void create_tcp_socket(int*);
 char* recieve_message();
 
 /* Strings.xml */
@@ -122,11 +122,14 @@ int send_command(int cmd)
 	printf("%s\n", user_command);
 
 	init_connection(server_ip, server_port);
+	printf("Connected\n");
 
 	size_t echo_string_len = strlen(user_command);
+	printf("%zu", echo_string_len);
 
 	/* Send command string to the server */
-	size_t num_bytes = send(client_sock, user_command, echo_string_len, 0); // client sock has no value yet
+	size_t num_bytes = send(client_sock, user_command, echo_string_len, 0); 
+	printf("%zu", num_bytes);
 
 	if((num_bytes < 0) || (num_bytes != echo_string_len))
 		switch_state(ERROR_STATE);
@@ -205,12 +208,15 @@ void init_connection(char* serv_ip, unsigned short serv_port)
 {
 	memset(&send_buffer, 0, SNDBUFSIZE);
 	memset(&rcv_buffer, 0, RCVBUFSIZE);
+	printf("memset\n");
 
-	create_tcp_socket(client_sock); // client_sock has no value yet
+	create_tcp_socket(&client_sock);
+	printf("Created TCP socket\n");
 
 	/* Construct the server address structure */
 	memset(&serv_addr, 0, sizeof(serv_addr));
 	serv_addr.sin_family = AF_INET;
+	printf("Constructed server address structure\n");
 
 	/* Convert address */
 	int ret_val = inet_pton(AF_INET, serv_ip, &serv_addr.sin_addr.s_addr);
@@ -220,9 +226,13 @@ void init_connection(char* serv_ip, unsigned short serv_port)
 
 	serv_addr.sin_port = htons(serv_port);
 
+	printf("Convert address\n");
+
 	/* Establish connection */
 	if(connect(client_sock, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
 		switch_state(ERROR_STATE);
+
+	printf("Establish connection\n");
 }
 
 /*
@@ -230,10 +240,10 @@ void init_connection(char* serv_ip, unsigned short serv_port)
  *
  * Param: The client socket
  */
-void create_tcp_socket(int client_socket)
+void create_tcp_socket(int* p_client_socket)
 {
-	client_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	*p_client_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-	if(client_socket < 0)
+	if(p_client_socket < 0)
 		switch_state(ERROR_STATE);
 }
