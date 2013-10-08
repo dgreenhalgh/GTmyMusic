@@ -19,6 +19,7 @@
 	#include <string.h>         /* support any string ops */
 	#include <openssl/evp.h>    /* for OpenSSL EVP digest libraries/SHA256 */
 	#include <pthread.h>		/* for parallel processing */
+	#include <dirent.h>
 
 
 	/* Message Structures */
