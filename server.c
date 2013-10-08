@@ -186,19 +186,26 @@ void command_handler(void* helper_struct)
 {
     command_handler_helper* p_helper_struct = (command_handler_helper*) helper_struct;
 
-	char command[5], trimmed_command[4];
-	recv(p_helper_struct->socket, command, 4, 0); // fix me
-	command[5] = '\0';
+	char command[2];
+	recv(p_helper_struct->socket, command, 1, 0); // fix me
 
-	int i_hack;
-	for(i_hack = 0; i_hack < 4; i_hack)
-		trimmed_command[i_hack] = command[i_hack];
-	
+	printf("%c\n", command[0]);
 
-	printf("%s\n", command);
-	printf("%s\n", trimmed_command);
+	switch(command[0] - '0')
+	{
+		case(LIST):
+			list();
+		case(DIFF):
+			diff();
+		case(PULL):
+			pull();
+		case(LEAVE):
+			leave();
+		default:
+			printf("%s\n", "Invalid command");
+	}
 
-	if(strcmp(trimmed_command, "LIST") == 0)
+	/*if(strcmp(trimmed_command, "LIST") == 0)
 	{
 		printf("LISTing\n");
 		list();
@@ -218,7 +225,7 @@ void command_handler(void* helper_struct)
 	else
 	{
 		printf("%s\n", "Invalid command string.");
-	}
+	}*/
 
     // Cleanup socket and thread.
     close(p_helper_struct->socket);

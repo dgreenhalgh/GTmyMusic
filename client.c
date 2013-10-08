@@ -11,10 +11,6 @@
 #include "GTmyMusic.h"
 
 /* Constants */
-#define LIST 0
-#define DIFF 1
-#define PULL 2
-#define LEAVE 3
 #define START_STATE 100
 #define ERROR_STATE -1
 
@@ -34,7 +30,7 @@ void create_tcp_socket(int*);
 char* recieve_message();
 
 /* Strings.xml */
-char* commands[] = {"LIST", "DIFF", "PULL", "LEAF"};
+char* commands[] = {"LIST", "DIFF", "PULL", "PLL1", "PLL2", "PLL3", "LEAF"};
 
 const char* bad_command = "Command not recognized, exiting now.\n";
 const char* bad_number_of_commands = "Improper number of args, exiting now.\nCommand line menu usage: ./musicClient\nDirect command usage: ./musicClient <command>\n";
@@ -128,17 +124,17 @@ int main(int argc, char *argv[])
  */
 int send_command(int cmd)
 {
-	char* user_command = commands[cmd];
-	printf("%s\n", user_command);
+	char user_command = (char)(((int)'0')+cmd);
+	printf("%c\n", user_command);
 
 	init_connection(server_ip, server_port);
 	printf("Connected\n");
 
-	size_t echo_string_len = strlen(user_command);
+	size_t echo_string_len = sizeof(char);
 	printf("%zu", echo_string_len);
 
 	/* Send command string to the server */
-	size_t num_bytes = send(client_sock, user_command, echo_string_len, 0); 
+	size_t num_bytes = send(client_sock, &user_command, echo_string_len, 0); 
 	printf("%zu", num_bytes);
 
 	if((num_bytes < 0) || (num_bytes != echo_string_len))
@@ -158,7 +154,68 @@ int send_command(int cmd)
 		num_command_bytes = recv(client_sock, command_name_buffer, command_length, 0);
 	}
 
-	while(total_bytes_rcvd < echo_string_len)
+	char filenames_length_buffer[sizeof(size_t)];
+	char files_length_buffer[sizeof(size_t)];
+	printf("we have a command\n");
+	printf("%s\n", command_name_buffer);
+	if(strcmp(command_name_buffer, "LIST") == 0)
+	{
+		recv(client_sock, filenames_length_buffer, sizeof(size_t), 0);
+
+		char serialized_server_filenames_buffer[sizeof(filenames_length_buffer)];
+		recv(client_sock, serialized_server_filenames_buffer, sizeof(serialized_server_filenames_buffer), 0);
+
+		printf("%s\n", strtok(serialized_server_filenames_buffer, ".mp3")); // for testing
+
+		//char* reinflated_server_filenames[MAX_NUM_FILES] = strtok(serialized_server_filenames_buffer, ".mp3");
+		/*int i_filename;
+		for(i_filename = 0; i_filename < MAX_NUM_FILES; i_filename++)
+		{
+			if(reinflated_server_filenames[i_filename])
+				printf("%s\n", reinflated_server_filenames[i_filename]);
+		}*/
+	}
+	else if(strcmp(command_name_buffer, "DIFF") == 0)
+	{
+		recv(client_sock, filenames_length_buffer, sizeof(size_t), 0);
+
+		char serialized_server_filenames_buffer[sizeof(filenames_length_buffer)];
+		recv(client_sock, serialized_server_filenames_buffer, sizeof(serialized_server_filenames_buffer), 0);
+
+		// have to actually diff them
+
+	}
+	else if(strcmp(command_name_buffer, "PLL1") == 0)
+	{
+		recv(client_sock, filenames_length_buffer, sizeof(size_t), 0);
+
+		char serialized_server_filenames_buffer[sizeof(filenames_length_buffer)];
+		recv(client_sock, serialized_server_filenames_buffer, sizeof(serialized_server_filenames_buffer), 0);
+	}
+	else if(strcmp(command_name_buffer, "PLL3") == 0)
+	{
+		recv(client_sock, files_length_buffer, sizeof(size_t), 0);
+
+		int i_transmitted_file;
+		for (i_transmitted_file = 0; i_transmitted_file < MAX_NUM_FILES; i_transmitted_file++)
+		{
+			//recv(client_sock, )
+			// how long should socket stay open?
+		}
+	}
+	else if(strcmp(command_name_buffer, "LEAF") == 0)
+	{
+		//probably have to close connection
+
+		exit(1);
+	}
+	else
+	{
+		switch_state(ERROR_STATE);
+	}
+
+
+	/*while(total_bytes_rcvd < echo_string_len)
 	{
 		char buffer[RCVBUFSIZE];
 		num_bytes = recv(client_sock, buffer, RCVBUFSIZE - 1, 0);
@@ -170,7 +227,7 @@ int send_command(int cmd)
 		buffer[num_bytes] = '\0';
 
 		fputs(buffer, stdout); // temp
-	}
+	}*/
 
 	return cmd;
 }
