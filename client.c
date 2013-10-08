@@ -32,6 +32,8 @@ void print_main_menu_options();
 void init_connection(char*, unsigned short);
 void create_tcp_socket(int*);
 char* recieve_message();
+void execute_command(char*);
+char* diff_files(char*[], char*[]);
 
 /* Strings.xml */
 char* commands[] = {"LIST", "DIFF", "PULL", "LEAF"};
@@ -145,11 +147,75 @@ int send_command(int cmd)
 	size_t num_command_bytes;
 
 	/* Read command name */
-	char command_name_buffer[sizeof(char)*4];
+	char command_name_buffer[command_length];
 	while(total_bytes_rcvd < command_length)
 	{
 		num_command_bytes = recv(client_sock, command_name_buffer, command_length, 0);
 	}
+
+	char filenames_length_buffer[sizeof(size_t)];
+	char files_length_buffer[sizeof(size_t)];
+	if(strcmp(command_name_buffer, "LIST") == 0)
+	{
+		recv(client_sock, filenames_length_buffer, sizeof(size_t), 0);
+
+		char serialized_server_filenames_buffer[sizeof(filenames_length_buffer)];
+		recv(client_sock, serialized_server_filenames_buffer, sizeof(serialized_server_filenames_buffer), 0);
+
+		printf("%s\n", strtok(serialized_server_filenames_buffer, ".mp3")); // for testing
+
+		//char* reinflated_server_filenames[MAX_NUM_FILES] = strtok(serialized_server_filenames_buffer, ".mp3");
+		/*int i_filename;
+		for(i_filename = 0; i_filename < MAX_NUM_FILES; i_filename++)
+		{
+			if(reinflated_server_filenames[i_filename])
+				printf("%s\n", reinflated_server_filenames[i_filename]);
+		}*/
+	}
+	else if(strcmp(command_name_buffer, "DIFF") == 0)
+	{
+		recv(client_sock, filenames_length_buffer, sizeof(size_t), 0);
+
+		char serialized_server_filenames_buffer[sizeof(filenames_length_buffer)];
+		recv(client_sock, serialized_server_filenames_buffer, sizeof(serialized_server_filenames_buffer), 0);
+
+		// have to actually diff them
+
+	}
+	else if(strcmp(command_name_buffer, "PLL1") == 0)
+	{
+		recv(client_sock, filenames_length_buffer, sizeof(size_t), 0);
+
+		char serialized_server_filenames_buffer[sizeof(filenames_length_buffer)];
+		recv(client_sock, serialized_server_filenames_buffer, sizeof(serialized_server_filenames_buffer), 0);
+	}
+	else if(strcmp(command_name_buffer, "PLL3") == 0)
+	{
+		recv(client_sock, files_length_buffer, sizeof(size_t), 0);
+
+		int i_transmitted_file;
+		for (i_transmitted_file = 0; i_transmitted_file < MAX_NUM_FILES; i_transmitted_file++)
+		{
+			//recv(client_sock, )
+			// how long should socket stay open?
+		}
+	}
+	else if(strcmp(command_name_buffer, "LEAF") == 0)
+	{
+		//probably have to close connection
+
+		exit(1);
+	}
+	else
+	{
+		switch_state(ERROR_STATE);
+	}
+
+	//execute_command(command_name_buffer);
+
+
+
+
 
 	while(total_bytes_rcvd < echo_string_len)
 	{
@@ -250,3 +316,5 @@ void create_tcp_socket(int* p_client_socket)
 	if(p_client_socket < 0)
 		switch_state(ERROR_STATE);
 }
+
+
