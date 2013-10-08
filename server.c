@@ -58,21 +58,21 @@ size_t server_file_lengths[NUM_FILES];
 int main(int argc, char *argv[])
 {
 
- //    /* Read in local files */
- //    printf("Reading local files...\n");
-	// for(iFile = 0; iFile < NUM_FILES; iFile++)
-	// {
-	// 	char filename[20];
-	// 	sprintf(filename, "song%d", iFile);
+    /* Read in local files */
+    /*printf("Reading local files...\n");
+	for(iFile = 0; iFile < NUM_FILES; iFile++)
+	{
+		char filename[20];
+	 	sprintf(filename, "song%d", iFile);
 
-	// 	server_filenames[iFile] = filename;
-	// 	server_files[iFile] = fopen(filename, "r");
+	 	server_filenames[iFile] = filename;
+	 	server_files[iFile] = fopen(filename, "r");
 
-	// 	fseek(server_files[iFile], 0, SEEK_END);
-	// 	server_file_lengths[iFile] = ftell(server_files[iFile]);
+	 	fseek(server_files[iFile], 0, SEEK_END);
+	 	server_file_lengths[iFile] = ftell(server_files[iFile]);
 
-	// 	fclose(server_files[iFile]); // maybe?
-	// }
+	 	fclose(server_files[iFile]); // maybe?
+	}*/
 
 	/* Assign port number. */
 	server_port = PORT_NUMBER;
