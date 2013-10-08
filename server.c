@@ -205,28 +205,6 @@ void command_handler(void* helper_struct)
 			printf("%s\n", "Invalid command");
 	}
 
-	/*if(strcmp(trimmed_command, "LIST") == 0)
-	{
-		printf("LISTing\n");
-		list();
-	}
-	else if(strcmp(trimmed_command, "DIFF") == 0)
-	{
-		diff();
-	}
-	else if(strcmp(trimmed_command, "PULL") == 0)
-	{
-		pull();
-	}
-	else if(strcmp(trimmed_command, "LEAF") == 0)
-	{
-		leave();
-	}
-	else
-	{
-		printf("%s\n", "Invalid command string.");
-	}*/
-
     // Cleanup socket and thread.
     close(p_helper_struct->socket);
     pthread_exit(NULL);  // may be overkill/not needed?
@@ -240,8 +218,9 @@ void command_handler(void* helper_struct)
 int list()
 {
 	list_message new_list_message;
-    new_list_message.command_name = (char*) malloc(5);
-    strcpy(new_list_message.command_name, "LIST");
+	new_list_message.command = (char)(((int)'0')+LIST);
+    //new_list_message.command_name = (char*) malloc(5);
+    //strcpy(new_list_message.command_name, "LIST");
 	new_list_message.filenames_length = get_filenames_length(server_filenames);
 	
 
@@ -261,7 +240,7 @@ int list()
     //strcpy(new_list_message.serialized_server_filenames, pp_temp);
     printf("after\n");
 
-	send(server_socket, &new_list_message.command_name, sizeof(new_list_message.command_name), 0);
+	send(server_socket, &new_list_message.command, sizeof(new_list_message.command), 0);
 	send(server_socket, &new_list_message.filenames_length, sizeof(new_list_message.filenames_length), 0);
 	send(server_socket, &new_list_message.serialized_server_filenames, sizeof(new_list_message.serialized_server_filenames), 0);
 	
@@ -277,12 +256,13 @@ int list()
 int diff()
 {
 	diff_message new_diff_message;
-	strcpy(new_diff_message.command_name, "DIFF");
+	//strcpy(new_diff_message.command_name, "DIFF");
+	new_diff_message.command = (char)(((int)'0')+DIFF);
 	new_diff_message.filenames_length = get_filenames_length(server_filenames);
     char* spaghetti = "";
 	new_diff_message.serialized_server_filenames = serialize_filenames(server_filenames, spaghetti);
 
-	send(server_socket, &new_diff_message.command_name, sizeof(new_diff_message.command_name), 0);
+	send(server_socket, &new_diff_message.command, sizeof(new_diff_message.command), 0);
 	send(server_socket, &new_diff_message.filenames_length, sizeof(new_diff_message.filenames_length), 0);
 	send(server_socket, &new_diff_message.serialized_server_filenames, sizeof(new_diff_message.serialized_server_filenames), 0);
 
@@ -299,12 +279,13 @@ int pull()
 {
 	/* Pull message 1 */
 	pull_message_1 new_pull_message_1;
-	strcpy(new_pull_message_1.command_name, "PLL1");
+	//strcpy(new_pull_message_1.command_name, "PLL1");
+	new_pull_message_1.command = (char)(((int)'0')+PLL1);
 	new_pull_message_1.filenames_length = get_filenames_length(server_filenames);
 	char* spaghetti = "";
     new_pull_message_1.serialized_server_filenames = serialize_filenames(server_filenames, spaghetti);
 
-	send(server_socket, &new_pull_message_1.command_name, sizeof(new_pull_message_1.command_name), 0);
+	send(server_socket, &new_pull_message_1.command, sizeof(new_pull_message_1.command), 0);
 	send(server_socket, &new_pull_message_1.filenames_length, sizeof(new_pull_message_1.filenames_length), 0);
 	send(server_socket, &new_pull_message_1.serialized_server_filenames, sizeof(new_pull_message_1.serialized_server_filenames), 0);
 
@@ -313,11 +294,12 @@ int pull()
 
 	/* Pull message 3 */
 	pull_message_3 new_pull_message_3;
-	strcpy(new_pull_message_3.command_name, "PLL3");
+	//strcpy(new_pull_message_3.command_name, "PLL3");
+	new_pull_message_3.command = (char)(((int)'0')+PLL3);
 	new_pull_message_3.files_length = get_server_files_length(server_file_lengths);
 	// pull_message_3.server_files is sent below
 
-	send(server_socket, &new_pull_message_3.command_name, sizeof(new_pull_message_3.command_name), 0);
+	send(server_socket, &new_pull_message_3.command, sizeof(new_pull_message_3.command), 0);
 	send(server_socket, &new_pull_message_3.files_length, sizeof(new_pull_message_3.files_length), 0);
 
 	int i_server_file;
@@ -335,9 +317,10 @@ int pull()
 int leave()
 {
 	leave_message new_leave_message;
-	strcpy(new_leave_message.command_name, "LEAF");
+	//strcpy(new_leave_message.command_name, "LEAF");
+	new_leave_message.command = (char)(((int)'0')+LEAVE);
 
-	send(server_socket, &new_leave_message.command_name, sizeof(new_leave_message.command_name), 0);
+	send(server_socket, &new_leave_message.command, sizeof(new_leave_message.command), 0);
 
 	return(0); // unused for now
 }
