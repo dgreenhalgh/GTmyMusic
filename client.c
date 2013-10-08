@@ -93,6 +93,7 @@ int main(int argc, char *argv[])
 		if(strcmp(argv[1], "list") == 0)
 		{
 			send_command(LIST);
+			printf("Command Sent!\n");
 		}
 		else if(strcmp(argv[1], "diff") == 0)
 		{
@@ -119,6 +120,8 @@ int main(int argc, char *argv[])
 	{
 		printf("%s", bad_number_of_commands);
 	}
+
+	printf("End of Client MAIN.\n");
 }
 
 /*
@@ -136,13 +139,13 @@ int send_command(int cmd)
 	printf("Connected\n");
 
 	size_t echo_string_len = sizeof(char);
-	printf("%zu", echo_string_len);
+	printf("echo_string_len = %zu\n", echo_string_len);
 
 	/* Send command string to the server */
 	size_t num_bytes = send(client_sock, &user_command, echo_string_len, 0); 
-	printf("%zu", num_bytes);
+	printf("num_bytes = %zu\n", num_bytes);
 
-	if((num_bytes < 0) || (num_bytes != echo_string_len))
+	if(num_bytes != echo_string_len)
 		switch_state(ERROR_STATE);
 
 	/* Receive command back */
@@ -150,15 +153,17 @@ int send_command(int cmd)
 
 	// Note: all commands are 4 chars in length
 	size_t command_length = sizeof(char);
-	printf("%zu", command_length);
+	printf("Command Length = %zu\n", command_length);
 	size_t num_command_bytes;
 
 	/* Read command name */
+	printf("Read command name\n");
 	char command_name_buffer[2];
 	while(total_bytes_rcvd < command_length)
 	{
 		num_command_bytes = recv(client_sock, command_name_buffer, sizeof(char), 0);
 		total_bytes_rcvd += num_command_bytes;
+		printf("while looping\n");
 	}
 
 	char filenames_length_buffer[sizeof(size_t)];
@@ -170,10 +175,25 @@ int send_command(int cmd)
 	{
 		case(LIST):
 		{
+			printf("inside of list\n");
 			recv(client_sock, filenames_length_buffer, sizeof(size_t), 0);
+			printf("filenames_length_buffer = %s\n", filenames_length_buffer);
+			
+			int server_filenames_length = (int) filenames_length_buffer;
+			server_filenames_length = 80;
+			printf("server_filenames_length = %d\n", server_filenames_length);
 
-			char serialized_server_filenames_buffer[sizeof(filenames_length_buffer)];
-			recv(client_sock, serialized_server_filenames_buffer, sizeof(serialized_server_filenames_buffer), 0);
+			char serialized_server_filenames_buffer[server_filenames_length];
+			
+			int num_bytes_rcvd = 0;
+			total_bytes_rcvd = 0;
+			while(total_bytes_rcvd < server_filenames_length) {
+				printf("total_bytes_rcvd = %d\n", total_bytes_rcvd);
+				num_bytes_rcvd = recv(client_sock, serialized_server_filenames_buffer, server_filenames_length, 0);
+				total_bytes_rcvd += num_bytes_rcvd;
+			}
+			
+			printf("serialized = %s\n", serialized_server_filenames_buffer);
 
 			printf("%s\n", serialized_server_filenames_buffer);
 
@@ -229,7 +249,7 @@ int send_command(int cmd)
 		printf("%s\n", strtok(serialized_server_filenames_buffer, ".mp3")); // for testing
 
 		//char* reinflated_server_filenames[MAX_NUM_FILES] = strtok(serialized_server_filenames_buffer, ".mp3");
-		/*int i_filename;
+		int i_filename;
 		for(i_filename = 0; i_filename < MAX_NUM_FILES; i_filename++)
 		{
 			if(reinflated_server_filenames[i_filename])
@@ -289,6 +309,8 @@ int send_command(int cmd)
 
 		fputs(buffer, stdout); // temp
 	}*/
+
+	//printf("End of send command.\n");
 
 	return cmd;
 }

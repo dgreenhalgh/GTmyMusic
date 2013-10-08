@@ -33,7 +33,7 @@
 	/* Message Structures */
 	typedef struct {
 		char command;
-		size_t filenames_length;
+		int filenames_length;
 		char* serialized_server_filenames;
 	} list_message;
 
