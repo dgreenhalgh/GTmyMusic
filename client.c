@@ -195,7 +195,7 @@ int switch_state(int state)
 		close(client_sock);
 
 	}
-	else if(state = ERROR_STATE)
+	else if(state == ERROR_STATE)
 	{
 		printf("Connection lost, exiting now.\n");	
 		exit(1);
