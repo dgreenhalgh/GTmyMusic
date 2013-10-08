@@ -74,9 +74,14 @@ int main(int argc, char *argv[])
 		int count = 0;
 		while ((ent = readdir (dir)) != NULL)
 		{
-    		local_filenames[count] = ent->d_name;
-    		count++;
-    		printf("%s\n", ent->d_name);
+			if((strcmp(ent->d_name, ".") != 0) &&
+				(strcmp(ent->d_name, "..") != 0) &&
+				(strcmp(ent->d_name, ".DS_Store") != 0))
+			{
+	    		local_filenames[count] = ent->d_name;
+	    		count++;
+	    		printf("%s\n", ent->d_name);
+    		}
     		// figure out how to ignore '.' and '..'
 		}
 	}
