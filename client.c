@@ -92,6 +92,7 @@ int main(int argc, char *argv[])
 		if(strcmp(argv[1], "list") == 0)
 		{
 			send_command(LIST);
+			printf("Command Sent!\n");
 		}
 		else if(strcmp(argv[1], "diff") == 0)
 		{
@@ -114,6 +115,8 @@ int main(int argc, char *argv[])
 	{
 		printf("%s", bad_number_of_commands);
 	}
+
+	printf("End of Client MAIN.\n");
 }
 
 /*
@@ -171,8 +174,20 @@ int send_command(int cmd)
 			recv(client_sock, filenames_length_buffer, sizeof(size_t), 0);
 			printf("filenames_length_buffer = %s\n", filenames_length_buffer);
 			
-			char serialized_server_filenames_buffer[sizeof(filenames_length_buffer)];
-			recv(client_sock, serialized_server_filenames_buffer, sizeof(serialized_server_filenames_buffer), 0);
+			int server_filenames_length = (int) filenames_length_buffer;
+			server_filenames_length = 80;
+			printf("server_filenames_length = %d\n", server_filenames_length);
+
+			char serialized_server_filenames_buffer[server_filenames_length];
+			
+			int num_bytes_rcvd = 0;
+			total_bytes_rcvd = 0;
+			while(total_bytes_rcvd < server_filenames_length) {
+				printf("total_bytes_rcvd = %d\n", total_bytes_rcvd);
+				num_bytes_rcvd = recv(client_sock, serialized_server_filenames_buffer, server_filenames_length, 0);
+				total_bytes_rcvd += num_bytes_rcvd;
+			}
+			
 			printf("serialized = %s\n", serialized_server_filenames_buffer);
 
 			printf("%s\n", serialized_server_filenames_buffer);
@@ -289,6 +304,8 @@ int send_command(int cmd)
 
 		fputs(buffer, stdout); // temp
 	}*/
+
+	//printf("End of send command.\n");
 
 	return cmd;
 }

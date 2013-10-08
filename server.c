@@ -28,7 +28,7 @@ int list();
 int diff();
 int pull();
 int leave();
-size_t get_filenames_length(char*[]);
+int get_filenames_length(char*[]);
 char* serialize_filenames(char*[], char*);
 size_t get_server_files_length(size_t[]);
 void command_handler(void*);
@@ -225,13 +225,12 @@ int list()
     //new_list_message.command_name = (char*) malloc(5);
     //strcpy(new_list_message.command_name, "LIST");
 	new_list_message.filenames_length = get_filenames_length(server_filenames);
-	
+	printf("%d\n", new_list_message.filenames_length);
 
     char* serialized = (char*) malloc(new_list_message.filenames_length);;
     new_list_message.serialized_server_filenames = (char*) malloc(new_list_message.filenames_length);
     
 
-    printf("%zu\n", get_filenames_length(server_filenames));
     serialized = serialize_filenames(server_filenames, new_list_message.serialized_server_filenames);
 
 
@@ -337,9 +336,9 @@ int leave()
 /*
  * Returns the number of bytes in the list of filenames on the server
  */
-size_t get_filenames_length(char* filenames[])
+int get_filenames_length(char* filenames[])
 {
-	size_t fn_length = 0;
+	int fn_length = 0;
 	int i_filename;
 	for (i_filename = 0; i_filename < NUM_FILES; i_filename++)
 		fn_length += sizeof(filenames[i_filename]);
