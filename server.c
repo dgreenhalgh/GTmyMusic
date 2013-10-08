@@ -120,6 +120,7 @@ int main(int argc, char *argv[])
 
     	/* Accept incoming connection. */
         client_socket = accept(server_socket, (struct sockaddr *) &client_address, &address_length);
+        printf("Connection accepted\n");
 
         if (client_socket < 0) {
             printf("accept() failed\n");
