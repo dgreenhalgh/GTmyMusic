@@ -53,6 +53,8 @@ char* server_filenames[NUM_FILES];
 
 size_t server_file_lengths[NUM_FILES];
 
+int filenames_count = 0;
+
 
 /* pthreads */
 static pthread_t *server_threads;
@@ -87,6 +89,7 @@ int main(int argc, char *argv[])
 			{
 				server_filenames[count] = ent->d_name;
 				count++;
+                filenames_count++;
     		}
 		}
 	}
@@ -127,7 +130,7 @@ int main(int argc, char *argv[])
 
     /* Loop server forever. */
     while(1){
-        printf("looping...\n");
+        printf("listen thread looping...\n");
 
     	address_length = sizeof(client_address);
 
@@ -245,19 +248,21 @@ int list()
 	new_list_message.filenames_length = get_filenames_length(server_filenames);
 	
 
-    char* spaghetti = (char*) malloc(new_list_message.filenames_length);;
+    char* serialized = (char*) malloc(new_list_message.filenames_length);;
     new_list_message.serialized_server_filenames = (char*) malloc(new_list_message.filenames_length);
     
 
     printf("%zu\n", get_filenames_length(server_filenames));
-    spaghetti = serialize_filenames(server_filenames, new_list_message.serialized_server_filenames);
+    serialized = serialize_filenames(server_filenames, new_list_message.serialized_server_filenames);
 
+
+    printf("return = %s\n", serialized);
+    printf("param = %s\n", new_list_message.serialized_server_filenames);
 
 
     printf("before\n");
-    //char** pp_temp = serialize_filenames(server_filenames, spaghetti);
+    //char** pp_temp = serialize_filenames(server_filenames, serialized);
     printf("middle\n");
-
     //strcpy(new_list_message.serialized_server_filenames, pp_temp);
     printf("after\n");
 
@@ -265,6 +270,10 @@ int list()
 	send(server_socket, &new_list_message.filenames_length, sizeof(new_list_message.filenames_length), 0);
 	send(server_socket, &new_list_message.serialized_server_filenames, sizeof(new_list_message.serialized_server_filenames), 0);
 	
+
+    // Cleanup thread.
+    pthread_exit(NULL);  // may be overkill/not needed?
+
 	return(0); // unused for now
 }
 
@@ -357,31 +366,26 @@ size_t get_filenames_length(char* filenames[])
 
 char* serialize_filenames(char* filenames[], char* spaghetti)
 {
-    char* p_temp = malloc(sizeof(spaghetti));
+    printf("serialize_filenames\n");
+    printf("count = %d\n", filenames_count);
+
+    char* p_temp = (char*) malloc(sizeof(spaghetti));
 	int i_filename;
-    //int size;
-	for(i_filename = 0; i_filename < sizeof(filenames); i_filename++)
+
+	for(i_filename = 0; i_filename < filenames_count; i_filename++)
 	{
-        //size = size + strlen(filenames[i_filename])+1;
-		//p_temp = malloc(strlen(p_temp)+strlen(filenames[i_filename])+1);
         printf("before_cat\n");
         printf("%s\n", filenames[i_filename]);
 		strcat(spaghetti, filenames[i_filename]);
         printf("after_cat\n");
+        printf("%s\n", spaghetti);
 	}
 
-    // p_temp = malloc(size);
-    // for(i_filename = 0; i_filename < get_filenames_length(filenames); i_filename++)
-    // {
-    //     strcat(p_temp, filenames[i_filename]);
-    // }
+    p_temp = spaghetti;
 
-    //*spaghetti = *p_temp;
+    printf("%s\n", p_temp);
 
-    printf("%s\n", spaghetti);
-    printf("%zu\n", sizeof(filenames));
-
-	return spaghetti;
+	return p_temp;
 }
 
 size_t get_server_files_length(size_t server_file_length_list[])

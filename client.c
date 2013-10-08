@@ -137,7 +137,7 @@ int send_command(int cmd)
 	size_t num_bytes = send(client_sock, &user_command, echo_string_len, 0); 
 	printf("%zu", num_bytes);
 
-	if((num_bytes < 0) || (num_bytes != echo_string_len))
+	if(num_bytes != echo_string_len)
 		switch_state(ERROR_STATE);
 
 	/* Receive command back */
