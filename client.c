@@ -145,6 +145,7 @@ int send_command(int cmd)
 
 	// Note: all commands are 4 chars in length
 	size_t command_length = sizeof(char);
+	printf("%zu", command_length);
 	size_t num_command_bytes;
 
 	/* Read command name */
@@ -152,6 +153,7 @@ int send_command(int cmd)
 	while(total_bytes_rcvd < command_length)
 	{
 		num_command_bytes = recv(client_sock, command_name_buffer, sizeof(char), 0);
+		total_bytes_rcvd += num_command_bytes;
 	}
 
 	char filenames_length_buffer[sizeof(size_t)];
@@ -167,6 +169,8 @@ int send_command(int cmd)
 
 			char serialized_server_filenames_buffer[sizeof(filenames_length_buffer)];
 			recv(client_sock, serialized_server_filenames_buffer, sizeof(serialized_server_filenames_buffer), 0);
+
+			printf("%s\n", serialized_server_filenames_buffer);
 
 			// tokenize filenames
 			// print filenames
