@@ -173,7 +173,19 @@ int send_command(int cmd)
 			printf("%s\n", serialized_server_filenames_buffer);
 
 			// tokenize filenames
+			char* server_filenames[100];
+			int i_server_filename = 0;
+			while(strtok(serialized_server_filenames_buffer, '\n') != NULL)
+			{
+				server_filenames[i_server_filename] = strtok(serialized_server_filenames_buffer, '\n');
+				i_server_filename++;
+			}
+			printf("%d\n", i_server_filename);
+
 			// print filenames
+			int i_transmitted_filename;
+			for(i_transmitted_filename = 0; i_transmitted_filename < i_server_filename; i_transmitted_filename++)
+				printf("%s\n", server_filenames[i_transmitted_filename]);
 		}
 		case(DIFF):
 		{
