@@ -61,20 +61,24 @@ int main(int argc, char *argv[])
 {
 	/* Read in local files */
 	printf("Reading local files...\n");
-	for(i_file = 0; i_file < MAX_NUM_FILES; i_file++)
+	DIR *dir;
+	struct dirent *ent;
+
+	char cwd[1024];
+	char *wd = getcwd(cwd, sizeof(cwd));
+	
+	char* full_dir = strcat(cwd, "/clientSongs/");
+
+	if((dir = opendir(full_dir)) != NULL)
 	{
-		char filename[20];
-	 	sprintf(filename, "song%d%s", i_file, ".mp3");
-	 	printf("%s\n", filename);
-
-	 	local_filenames[i_file] = filename;
-	 	local_files[i_file] = fopen(filename, "r");
-
-	 	fseek(local_files[i_file], sizeof(local_files[i_file])*i_file, SEEK_END); // seg fault
-	 	printf("%d\n", i_file);
-	 	local_file_lengths[i_file] = ftell(local_files[i_file]);
-
-	 	fclose(local_files[i_file]); // maybe?
+		int count = 0;
+		while ((ent = readdir (dir)) != NULL)
+		{
+    		local_filenames[count] = ent->d_name;
+    		count++;
+    		printf("%s\n", ent->d_name);
+    		// figure out how to ignore '.' and '..'
+		}
 	}
 
 	if(argc == 1)
