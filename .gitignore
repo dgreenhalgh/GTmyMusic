@@ -19,3 +19,7 @@ musicServer
 *.exe
 *.out
 *.app
+
+# Songs
+*.mp3
+
