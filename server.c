@@ -31,6 +31,7 @@ int leave();
 size_t get_filenames_length(char*[]);
 char* serialize_filenames(char*[]);
 size_t get_server_files_length(size_t[]);
+void* command_handler(void*);
 
 
 int server_socket;                          /* Server Socket */
@@ -132,6 +133,9 @@ int main(int argc, char *argv[])
             printf("Accepted incoming connection.\n");
         }
 
+        pthread_t* new_connection_thread;
+        //pthread_create(&new_connection_thread, NULL, &command_handler, &command_handler_helper);
+
         /* Extract the command from the packet and store in command_buffer */
         byte_count = recv(server_socket, command_buffer, BUFFER_SIZE - 1, 0);
         if (byte_count < 0) {
@@ -162,6 +166,33 @@ int main(int argc, char *argv[])
 }
 
 /* Other functions: */
+void* command_handler(void* helper_struct)
+{
+	char command[4];
+	recv((helper_struct).socket, command, 4, 0); // fix me
+	printf("%s\n", command);
+
+	if(strcmp(command, "LIST") == 0)
+	{
+		list();
+	}
+	else if(strcmp(command, "DIFF") == 0)
+	{
+		diff();
+	}
+	else if(strcmp(command, "PULL") == 0)
+	{
+		pull();
+	}
+	else if(strcmp(command, "LEAF") == 0)
+	{
+		leave();
+	}
+	else
+	{
+		printf("%s\n", "Invalid command string.");
+	}
+}
 
 /* 
  * Command: LIST

@@ -56,4 +56,9 @@
 		char* command_name;
 	} leave_message;
 
+	typedef struct {
+		int socket;
+		int socket_index;
+	} command_handler_helper;
+
 #endif
