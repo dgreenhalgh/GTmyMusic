@@ -29,9 +29,9 @@ int diff();
 int pull();
 int leave();
 size_t get_filenames_length(char*[]);
-char* serialize_filenames(char*[]);
+char* serialize_filenames(char*[], char*);
 size_t get_server_files_length(size_t[]);
-void* command_handler(void*);
+void command_handler(void*);
 
 
 int server_socket;                          /* Server Socket */
@@ -57,7 +57,8 @@ size_t server_file_lengths[NUM_FILES];
 /* pthreads */
 static pthread_t *server_threads;
 static int busy_threads[MAX_PENDING] = { 0 };
-
+static int created_flag = 0;
+static command_handler_helper helper_struct;
 
 /* 
  * The main function. 
@@ -66,6 +67,7 @@ int main(int argc, char *argv[])
 {
     /* Read in local files */
     printf("Reading local files...\n");
+
 	DIR *dir;
 	struct dirent *ent;
 
@@ -85,7 +87,6 @@ int main(int argc, char *argv[])
 			{
 				server_filenames[count] = ent->d_name;
 				count++;
-    			printf ("%s\n", ent->d_name);
     		}
 		}
 	}
@@ -93,7 +94,7 @@ int main(int argc, char *argv[])
 	/* Assign port number. */
 	server_port = PORT_NUMBER;
 
-    /* Allocate arrays */
+    /* Allocate thread array. */
     server_threads = malloc(sizeof(pthread_t) * MAX_PENDING);
 
     /* Create new TCP Socket for incoming requests. */
@@ -134,38 +135,45 @@ int main(int argc, char *argv[])
         client_socket = accept(server_socket, (struct sockaddr *) &client_address, &address_length);
         printf("Connection accepted\n");
 
-        if (client_socket < 0) {
-            printf("accept() failed\n");
-        }
-        else {
-            printf("Accepted incoming connection.\n");
+        helper_struct.socket = client_socket;
+
+        created_flag = 0;
+        while(created_flag == 0){
+        	int i;
+            for (i=0; i<MAX_PENDING; i++) {
+                if (busy_threads[i] == 0)
+                {
+                    helper_struct.socket_index = i;
+                    pthread_create(&server_threads[i], NULL, (void*)&command_handler, &helper_struct);
+                    busy_threads[i] = 1;
+                    created_flag = 1;
+                    break; //exit for loop
+                }                
+            }
         }
 
-        pthread_t* new_connection_thread;
-        //pthread_create(&new_connection_thread, NULL, &command_handler, &command_handler_helper);
+        // /* Extract the command from the packet and store in command_buffer */
+        // byte_count = recv(server_socket, command_buffer, BUFFER_SIZE - 1, 0);
+        // if (byte_count < 0) {
+        //     printf("recv() failed\n");
+        // }
+        // else if (byte_count == 0) {
+        //     printf("recv()", "connection closed prematurely\n");
+        // }
 
-        /* Extract the command from the packet and store in command_buffer */
-        byte_count = recv(server_socket, command_buffer, BUFFER_SIZE - 1, 0);
-        if (byte_count < 0) {
-            printf("recv() failed\n");
-        }
-        else if (byte_count == 0) {
-            printf("recv()", "connection closed prematurely\n");
-        }
+        // /* Interpret and execute command. */
+        // /* TODO */
 
-        /* Interpret and execute command. */
-        /* TODO */
+        // /* Return response to client */
+        // response_length = strlen(response_buffer);
 
-        /* Return response to client */
-        response_length = strlen(response_buffer);
-
-        byte_count = send(server_socket, response_buffer, response_length, 0);
-        if (byte_count < 0) {
-            printf("send() failed\n");
-        }
-        else if (byte_count != response_length) {
-            printf("send()", "sent unexpected number of bytes\n");
-        }
+        // byte_count = send(server_socket, response_buffer, response_length, 0);
+        // if (byte_count < 0) {
+        //     printf("send() failed\n");
+        // }
+        // else if (byte_count != response_length) {
+        //     printf("send()", "sent unexpected number of bytes\n");
+        // }
 
     }
 
@@ -174,32 +182,54 @@ int main(int argc, char *argv[])
 }
 
 /* Other functions: */
-void* command_handler(void* helper_struct)
+void command_handler(void* helper_struct)
 {
-	char command[4];
-	//recv((helper_struct).socket, command, 4, 0); // fix me
-	printf("%s\n", command);
+    command_handler_helper* p_helper_struct = (command_handler_helper*) helper_struct;
 
-	if(strcmp(command, "LIST") == 0)
+	char command[2];
+	recv(p_helper_struct->socket, command, 1, 0); // fix me
+
+	printf("%c\n", command[0]);
+
+	switch(command[0] - '0')
 	{
+		case(LIST):
+			list();
+		case(DIFF):
+			diff();
+		case(PULL):
+			pull();
+		case(LEAVE):
+			leave();
+		default:
+			printf("%s\n", "Invalid command");
+	}
+
+	/*if(strcmp(trimmed_command, "LIST") == 0)
+	{
+		printf("LISTing\n");
 		list();
 	}
-	else if(strcmp(command, "DIFF") == 0)
+	else if(strcmp(trimmed_command, "DIFF") == 0)
 	{
 		diff();
 	}
-	else if(strcmp(command, "PULL") == 0)
+	else if(strcmp(trimmed_command, "PULL") == 0)
 	{
 		pull();
 	}
-	else if(strcmp(command, "LEAF") == 0)
+	else if(strcmp(trimmed_command, "LEAF") == 0)
 	{
 		leave();
 	}
 	else
 	{
 		printf("%s\n", "Invalid command string.");
-	}
+	}*/
+
+    // Cleanup socket and thread.
+    close(p_helper_struct->socket);
+    pthread_exit(NULL);  // may be overkill/not needed?
 }
 
 /* 
@@ -210,9 +240,26 @@ void* command_handler(void* helper_struct)
 int list()
 {
 	list_message new_list_message;
-	strcpy(new_list_message.command_name, "LIST");
+    new_list_message.command_name = (char*) malloc(5);
+    strcpy(new_list_message.command_name, "LIST");
 	new_list_message.filenames_length = get_filenames_length(server_filenames);
-	new_list_message.serialized_server_filenames = serialize_filenames(server_filenames);
+	
+
+    char* spaghetti = (char*) malloc(new_list_message.filenames_length);;
+    new_list_message.serialized_server_filenames = (char*) malloc(new_list_message.filenames_length);
+    
+
+    printf("%zu\n", get_filenames_length(server_filenames));
+    spaghetti = serialize_filenames(server_filenames, new_list_message.serialized_server_filenames);
+
+
+
+    printf("before\n");
+    //char** pp_temp = serialize_filenames(server_filenames, spaghetti);
+    printf("middle\n");
+
+    //strcpy(new_list_message.serialized_server_filenames, pp_temp);
+    printf("after\n");
 
 	send(server_socket, &new_list_message.command_name, sizeof(new_list_message.command_name), 0);
 	send(server_socket, &new_list_message.filenames_length, sizeof(new_list_message.filenames_length), 0);
@@ -232,7 +279,8 @@ int diff()
 	diff_message new_diff_message;
 	strcpy(new_diff_message.command_name, "DIFF");
 	new_diff_message.filenames_length = get_filenames_length(server_filenames);
-	new_diff_message.serialized_server_filenames = serialize_filenames(server_filenames);
+    char* spaghetti = "";
+	new_diff_message.serialized_server_filenames = serialize_filenames(server_filenames, spaghetti);
 
 	send(server_socket, &new_diff_message.command_name, sizeof(new_diff_message.command_name), 0);
 	send(server_socket, &new_diff_message.filenames_length, sizeof(new_diff_message.filenames_length), 0);
@@ -253,7 +301,8 @@ int pull()
 	pull_message_1 new_pull_message_1;
 	strcpy(new_pull_message_1.command_name, "PLL1");
 	new_pull_message_1.filenames_length = get_filenames_length(server_filenames);
-	new_pull_message_1.serialized_server_filenames = serialize_filenames(server_filenames);
+	char* spaghetti = "";
+    new_pull_message_1.serialized_server_filenames = serialize_filenames(server_filenames, spaghetti);
 
 	send(server_socket, &new_pull_message_1.command_name, sizeof(new_pull_message_1.command_name), 0);
 	send(server_socket, &new_pull_message_1.filenames_length, sizeof(new_pull_message_1.filenames_length), 0);
@@ -306,15 +355,31 @@ size_t get_filenames_length(char* filenames[])
 	return fn_length;
 }
 
-char* serialize_filenames(char* filenames[])
+char* serialize_filenames(char* filenames[], char* spaghetti)
 {
-	char* spaghetti = "";
+    char* p_temp = malloc(sizeof(spaghetti));
 	int i_filename;
-	for(i_filename = 0; i_filename < get_filenames_length(filenames); i_filename++)
+    //int size;
+	for(i_filename = 0; i_filename < sizeof(filenames); i_filename++)
 	{
-		spaghetti = malloc(strlen(spaghetti)+strlen(filenames[i_filename])+1);
+        //size = size + strlen(filenames[i_filename])+1;
+		//p_temp = malloc(strlen(p_temp)+strlen(filenames[i_filename])+1);
+        printf("before_cat\n");
+        printf("%s\n", filenames[i_filename]);
 		strcat(spaghetti, filenames[i_filename]);
+        printf("after_cat\n");
 	}
+
+    // p_temp = malloc(size);
+    // for(i_filename = 0; i_filename < get_filenames_length(filenames); i_filename++)
+    // {
+    //     strcat(p_temp, filenames[i_filename]);
+    // }
+
+    //*spaghetti = *p_temp;
+
+    printf("%s\n", spaghetti);
+    printf("%zu\n", sizeof(filenames));
 
 	return spaghetti;
 }
