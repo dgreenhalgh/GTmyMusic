@@ -258,14 +258,11 @@ void create_tcp_socket(int* p_client_socket)
 
 int compare_files(char* filename_a, char* filename_b)
 {
-	FILE* file_a;
-	FILE* file_b;
+	FILE* file_a = fopen(filename_a, "r");
+	FILE* file_b = fopen(filename_b, "r");
 
-	char file_buffer_a[10000];
-	char file_buffer_b[10000];
-
-	file_a = fopen(filename_a, "r");
-	file_b = fopen(filename_b, "r");
+	char file_buffer_a[100000]; // Assuming we won't have a song file length over 100MB
+	char file_buffer_b[100000];
 
 	int ret_val = 1, var = 0;
 
