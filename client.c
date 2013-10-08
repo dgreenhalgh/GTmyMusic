@@ -420,10 +420,11 @@ int compare_files(char* filename_a, char* filename_b)
 			fclose(file_a);
 			fclose(file_b);
 			ret_val = 0;
+			return ret_val;
 			exit(0);
 		}
 	}
 
 	printf("Same files");
-
+	return(1);
 }
