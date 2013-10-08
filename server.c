@@ -169,7 +169,7 @@ int main(int argc, char *argv[])
 void* command_handler(void* helper_struct)
 {
 	char command[4];
-	recv((helper_struct).socket, command, 4, 0); // fix me
+	//recv((helper_struct).socket, command, 4, 0); // fix me
 	printf("%s\n", command);
 
 	if(strcmp(command, "LIST") == 0)
