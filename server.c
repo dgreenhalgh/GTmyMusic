@@ -140,11 +140,12 @@ int main(int argc, char *argv[])
 
         created_flag = 0;
         while(created_flag == 0){
-            for (int i=0; i<MAX_PENDING; i++) {
+        	int i;
+            for (i=0; i<MAX_PENDING; i++) {
                 if (busy_threads[i] == 0)
                 {
                     helper_struct.socket_index = i;
-                    pthread_create(&server_threads[i], NULL, &command_handler, &helper_struct);
+                    pthread_create(&server_threads[i], NULL, (void*)&command_handler, &helper_struct);
                     busy_threads[i] = 1;
                     created_flag = 1;
                     break; //exit for loop
@@ -234,7 +235,7 @@ int list()
     new_list_message.serialized_server_filenames = (char*) malloc(new_list_message.filenames_length);
     
 
-    printf("%d\n", get_filenames_length(server_filenames));
+    printf("%zu\n", get_filenames_length(server_filenames));
     spaghetti = serialize_filenames(server_filenames, new_list_message.serialized_server_filenames);
 
 
@@ -364,7 +365,7 @@ char* serialize_filenames(char* filenames[], char* spaghetti)
     //*spaghetti = *p_temp;
 
     printf("%s\n", spaghetti);
-    printf("%d\n", sizeof(filenames));
+    printf("%zu\n", sizeof(filenames));
 
 	return spaghetti;
 }
