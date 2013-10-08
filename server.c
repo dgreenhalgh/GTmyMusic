@@ -52,6 +52,12 @@ char* server_filenames[NUM_FILES];
 
 size_t server_file_lengths[NUM_FILES];
 
+
+/* pthreads */
+static pthread_t *server_threads;
+static int busy_threads[MAX_PENDING] = { 0 };
+
+
 /* 
  * The main function. 
  */
@@ -78,21 +84,17 @@ int main(int argc, char *argv[])
 	/* Assign port number. */
 	server_port = PORT_NUMBER;
 
+    /* Allocate arrays */
+    server_threads = malloc(sizeof(pthread_t) * MAX_PENDING);
+
     /* Create new TCP Socket for incoming requests. */
     printf("Creating a new TCP Socket for incoming requests...\n");
-    printf("debugging\n");
-    server_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    printf("Server socket:\n");
-    printf("%d", server_socket);
-    printf("come on!\n");
-    //printf("%d", server_socket);
-    //if ((server_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-    //    printf("socket() failed");
-    //}
-    //else {
-    //    printf("Socket Created");
-    //}
-    printf("DEBUG\n");
+    if ((server_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        printf("socket() failed");
+    }
+    else {
+        printf("Socket Created");
+    }
 
     /* Construct local address structure. */
     memset(&server_address, 0, sizeof(server_address));     // zero out structure
@@ -127,7 +129,7 @@ int main(int argc, char *argv[])
             printf("accept() failed\n");
         }
         else {
-            printf("Accepting incoming connections.\n");
+            printf("Accepted incoming connection.\n");
         }
 
         /* Extract the command from the packet and store in command_buffer */
