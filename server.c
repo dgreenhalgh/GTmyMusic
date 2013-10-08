@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
         printf("socket() failed");
     }
     else {
-        printf("Socket Created");
+        printf("Socket Created\n");
     }
 
     /* Construct local address structure. */
@@ -245,12 +245,12 @@ int list()
     //strcpy(new_list_message.serialized_server_filenames, pp_temp);
     printf("after\n");
 
-	send(server_socket, &new_list_message.command, sizeof(new_list_message.command), 0);
-	send(server_socket, &new_list_message.filenames_length, sizeof(new_list_message.filenames_length), 0);
-	send(server_socket, &new_list_message.serialized_server_filenames, sizeof(new_list_message.serialized_server_filenames), 0);
+	send(helper_struct.socket, &new_list_message.command, sizeof(new_list_message.command), 0);
+	send(helper_struct.socket, &new_list_message.filenames_length, sizeof(new_list_message.filenames_length), 0);
+	send(helper_struct.socket, &new_list_message.serialized_server_filenames, sizeof(new_list_message.serialized_server_filenames), 0);
 	
 
-    // Cleanup thread.
+    // Cleanup thread?
     pthread_exit(NULL);  // may be overkill/not needed?
 
 	return(0); // unused for now
@@ -359,7 +359,7 @@ char* serialize_filenames(char* filenames[], char* spaghetti)
 	{
         printf("before_cat\n");
         printf("%s\n", filenames[i_filename]);
-		strcat(spaghetti, filenames[i_filename]);
+		strcat(strcat(spaghetti, filenames[i_filename]), "\n");
         printf("after_cat\n");
         printf("%s\n", spaghetti);
 	}
