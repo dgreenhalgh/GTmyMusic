@@ -67,20 +67,19 @@ int main(int argc, char *argv[])
 {
     /* Read in local files */
     printf("Reading local files...\n");
-	for(i_file = 0; i_file < NUM_FILES; i_file++)
+
+	DIR *dir;
+	struct dirent *ent;
+
+	char cwd[1024];
+	char *wd = getcwd(cwd, sizeof(cwd));//, sizeof(cwd));
+	
+	char* full_dir = strcat(cwd, "/serverSongs/");
+
+	if((dir = opendir(full_dir)) != NULL)
 	{
-		char* filename = malloc(20);
-	 	sprintf(filename, "song%d%s", i_file, ".mp3");
-	 	printf("%s\n", filename);
-
-	 	server_filenames[i_file] = filename;
-	 	server_files[i_file] = fopen(filename, "r");
-
-	 	fseek(server_files[i_file], sizeof(server_files[i_file])*i_file, SEEK_END);
-	 	printf("%d\n", i_file);
-	 	server_file_lengths[i_file] = ftell(server_files[i_file]);
-
-	 	fclose(server_files[i_file]); // maybe?
+		while ((ent = readdir (dir)) != NULL)
+    		printf ("%s\n", ent->d_name);
 	}
 
 	/* Assign port number. */
@@ -179,6 +178,7 @@ void command_handler(void* helper_struct)
 
 	char command[5];
 	recv(p_helper_struct->socket, command, 4, 0); // fix me
+
 	printf("%s\n", command);
 
 	if(strcmp(command, "LIST") == 0)
