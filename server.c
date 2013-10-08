@@ -189,6 +189,7 @@ void command_handler(void* helper_struct)
 
 	char command[5];
 	recv(p_helper_struct->socket, command, 4, 0); // fix me
+	command[5] = '\0';
 
 	printf("%s\n", command);
 
