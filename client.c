@@ -28,6 +28,7 @@ void print_main_menu_options();
 void init_connection(char*, unsigned short);
 void create_tcp_socket(int*);
 char* recieve_message();
+int compare_files(char*, char*);
 
 /* Strings.xml */
 char* commands[] = {"LIST", "DIFF", "PULL", "PLL1", "PLL2", "PLL3", "LEAF"};
@@ -110,6 +111,10 @@ int main(int argc, char *argv[])
 		{
 			printf("%s", bad_command);
 		}
+	}
+	else if(argc == 3)
+	{
+		printf("%d\n", compare_files(argv[1], argv[2]));
 	}
 	else
 	{
@@ -394,4 +399,31 @@ void create_tcp_socket(int* p_client_socket)
 
 	if(p_client_socket < 0)
 		switch_state(ERROR_STATE);
+}
+
+int compare_files(char* filename_a, char* filename_b)
+{
+	FILE* file_a = fopen(filename_a, "r");
+	FILE* file_b = fopen(filename_b, "r");
+
+	char file_buffer_a[100000]; // Assuming we won't have a song file length over 100MB
+	char file_buffer_b[100000];
+
+	int ret_val = 1, var = 0;
+
+	while(((fgets(file_buffer_a, 1000, file_a)) && (fgets(file_buffer_b, 1000, file_b))))
+	{
+		var = strcmp(file_buffer_a, file_buffer_b);
+		if(var != 0)
+		{
+			printf("Files differ\n");
+			fclose(file_a);
+			fclose(file_b);
+			ret_val = 0;
+			exit(0);
+		}
+	}
+
+	printf("Same files");
+
 }
