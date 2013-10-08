@@ -144,21 +144,73 @@ int send_command(int cmd)
 	unsigned int total_bytes_rcvd = 0;
 
 	// Note: all commands are 4 chars in length
-	size_t command_length = sizeof(char)*4;
+	size_t command_length = sizeof(char);
 	size_t num_command_bytes;
 
 	/* Read command name */
-	char command_name_buffer[sizeof(char)*4];
+	char command_name_buffer[2];
 	while(total_bytes_rcvd < command_length)
 	{
-		num_command_bytes = recv(client_sock, command_name_buffer, command_length, 0);
+		num_command_bytes = recv(client_sock, command_name_buffer, sizeof(char), 0);
 	}
 
 	char filenames_length_buffer[sizeof(size_t)];
 	char files_length_buffer[sizeof(size_t)];
 	printf("we have a command\n");
-	printf("%s\n", command_name_buffer);
-	if(strcmp(command_name_buffer, "LIST") == 0)
+	printf("%c\n", command_name_buffer[0]);
+
+	switch(command_name_buffer[0] - '0')
+	{
+		case(LIST):
+		{
+			recv(client_sock, filenames_length_buffer, sizeof(size_t), 0);
+
+			char serialized_server_filenames_buffer[sizeof(filenames_length_buffer)];
+			recv(client_sock, serialized_server_filenames_buffer, sizeof(serialized_server_filenames_buffer), 0);
+
+			// tokenize filenames
+			// print filenames
+		}
+		case(DIFF):
+		{
+			recv(client_sock, filenames_length_buffer, sizeof(size_t), 0);
+
+			char serialized_server_filenames_buffer[sizeof(filenames_length_buffer)];
+			recv(client_sock, serialized_server_filenames_buffer, sizeof(serialized_server_filenames_buffer), 0);
+
+			// tokenize filenames
+			// diff filenames
+			// print diff
+		}
+		case(PLL1):
+		{
+			recv(client_sock, filenames_length_buffer, sizeof(size_t), 0);
+
+			char serialized_server_filenames_buffer[sizeof(filenames_length_buffer)];
+			recv(client_sock, serialized_server_filenames_buffer, sizeof(serialized_server_filenames_buffer), 0);
+
+			// tokenize filenames
+			// diff filenames
+			// send diff to server
+		}
+		case(PLL3):
+		{
+			recv(client_sock, files_length_buffer, sizeof(size_t), 0);
+
+			// receive files
+		}
+		case(LEAVE):
+		{
+			// do anything with connection?
+
+			exit(1);
+		}
+		default:
+			switch_state(ERROR_STATE);
+	}
+
+
+	/*if(strcmp(command_name_buffer, "LIST") == 0)
 	{
 		recv(client_sock, filenames_length_buffer, sizeof(size_t), 0);
 
@@ -173,8 +225,8 @@ int send_command(int cmd)
 		{
 			if(reinflated_server_filenames[i_filename])
 				printf("%s\n", reinflated_server_filenames[i_filename]);
-		}*/
-	}
+		}
+	/
 	else if(strcmp(command_name_buffer, "DIFF") == 0)
 	{
 		recv(client_sock, filenames_length_buffer, sizeof(size_t), 0);
@@ -212,7 +264,7 @@ int send_command(int cmd)
 	else
 	{
 		switch_state(ERROR_STATE);
-	}
+	}*/
 
 
 	/*while(total_bytes_rcvd < echo_string_len)
