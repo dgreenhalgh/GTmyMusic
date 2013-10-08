@@ -46,7 +46,7 @@ char response_buffer[SND_BUF_SIZE];          /* Buff to store response from serv
 size_t byte_count;              // Byte counter
 size_t response_length;         // Output Length
 
-int iFile;
+int i_file;
 FILE* server_files[NUM_FILES];
 char* server_filenames[NUM_FILES];
 
@@ -57,22 +57,23 @@ size_t server_file_lengths[NUM_FILES];
  */
 int main(int argc, char *argv[])
 {
-
     /* Read in local files */
-    /*printf("Reading local files...\n");
-	for(iFile = 0; iFile < NUM_FILES; iFile++)
+    printf("Reading local files...\n");
+	for(i_file = 0; i_file < NUM_FILES; i_file++)
 	{
 		char filename[20];
-	 	sprintf(filename, "song%d", iFile);
+	 	sprintf(filename, "song%d%s", i_file, ".mp3");
+	 	printf("%s\n", filename);
 
-	 	server_filenames[iFile] = filename;
-	 	server_files[iFile] = fopen(filename, "r");
+	 	server_filenames[i_file] = filename;
+	 	server_files[i_file] = fopen(filename, "r");
 
-	 	fseek(server_files[iFile], 0, SEEK_END);
-	 	server_file_lengths[iFile] = ftell(server_files[iFile]);
+	 	fseek(server_files[i_file], sizeof(server_files[i_file])*i_file, SEEK_END);
+	 	printf("%d\n", i_file);
+	 	server_file_lengths[i_file] = ftell(server_files[i_file]);
 
-	 	fclose(server_files[iFile]); // maybe?
-	}*/
+	 	fclose(server_files[i_file]); // maybe?
+	}
 
 	/* Assign port number. */
 	server_port = PORT_NUMBER;

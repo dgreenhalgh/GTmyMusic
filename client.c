@@ -60,6 +60,7 @@ size_t local_file_lengths[MAX_NUM_FILES]; // replace NUM_FILES
 int main(int argc, char *argv[])
 {
 	/* Read in local files */
+	printf("Reading local files...\n");
 	for(i_file = 0; i_file < MAX_NUM_FILES; i_file++)
 	{
 		char filename[20];
