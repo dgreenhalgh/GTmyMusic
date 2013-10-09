@@ -29,6 +29,10 @@
 	#define PLL2 4
 	#define PLL3 5
 	#define LEAVE 6
+	#define COMP 7
+
+	/* Function prototypes */
+	unsigned hash(char *s);
 
 	/* Message Structures */
 	typedef struct {
@@ -62,6 +66,12 @@
     	int files_length;
 		FILE* server_files;
 	} pull_message_3;
+
+	typedef struct {
+		char command;
+		int client_file_length;
+		unsigned client_hash;
+	} hash_compare;
 
 	typedef struct {
 		char command;

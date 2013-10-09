@@ -25,7 +25,7 @@ void print_main_menu_options();
 void init_connection(char*, unsigned short);
 void create_tcp_socket(int*);
 char* recieve_message();
-int compare_files(char*, char*);
+int compare_files(char*);
 
 /* Strings.xml */
 char* commands[] = {"LIST", "DIFF", "PULL", "PLL1", "PLL2", "PLL3", "LEAF"};
@@ -116,9 +116,9 @@ int main(int argc, char *argv[])
 			printf("%s", bad_command);
 		}
 	}
-	else if(argc == 3)
+	else if((argc == 3) && (strcmp(argv[1], "-c") == 0))
 	{
-		printf("%d\n", compare_files(argv[1], argv[2]));
+		compare_files(argv[2]);
 	}
 	else
 	{
@@ -391,6 +391,10 @@ int send_command(int cmd)
 
 			// receive files
 		}
+		case(COMP):
+		{
+
+		}
 		case(LEAVE):
 		{
 			// do anything with connection?
@@ -555,10 +559,20 @@ void create_tcp_socket(int* p_client_socket)
 		switch_state(ERROR_STATE);
 }
 
-int compare_files(char* filename_a, char* filename_b)
+// Not hash compare
+int compare_files(char* local_filename)
 {
-	FILE* file_a = fopen(filename_a, "r");
-	FILE* file_b = fopen(filename_b, "r");
+	FILE* l_file = fopen(filename_a, "r");
+
+	hash_compare new_hash_compare;
+	new_hash_compare.command = COMP;
+	new_hash_compare.client_file_length = 
+	new_hash_compare.client_file_hash = 
+
+	send_command("COMP");
+
+
+	/*FILE* file_b = fopen(filename_b, "r");
 
 	char file_buffer_a[100000]; // Assuming we won't have a song file length over 100MB
 	char file_buffer_b[100000];
@@ -579,6 +593,6 @@ int compare_files(char* filename_a, char* filename_b)
 		}
 	}
 
-	printf("Same files");
+	printf("Same files");*/
 	return(1);
 }
