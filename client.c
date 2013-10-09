@@ -30,7 +30,7 @@ int get_filenames_length(int, char*[]);
 void serialize_filenames(int , char*[], char*);
 
 /* Strings.xml */
-char* commands[] = {"LIST", "DIFF", "PULL", "PLL1", "PLL2", "PLL3", "LEAF"};
+char* commands[] = {"LIST", "DIFF", "PULL", "LEAF", "PLL1", "PLL2", "PLL3"};
 
 const char* bad_command = "Command not recognized, exiting now.\n";
 const char* bad_number_of_commands = "Improper number of args, exiting now.\nCommand line menu usage: ./musicClient\nDirect command usage: ./musicClient <command>\n";
@@ -149,8 +149,15 @@ int send_command(int cmd)
 	size_t command_length = sizeof(char);
 	char user_command = (char)(((int)'0')+cmd);
 
-	init_connection(server_ip, server_port);
-	printf("Connected\n");
+	if(cmd == LEAVE)
+	{
+		exit(1);
+	}
+	else
+	{
+		init_connection(server_ip, server_port);
+		printf("Connected\n");
+	}
 
 	/* Send command string to the server */
 	num_bytes_sent = 0;
@@ -692,7 +699,7 @@ int get_filenames_length(int file_count, char* filenames[])
 }
 
 void serialize_filenames(int file_count, char* filenames[], char* spaghetti)
-{
+{	
 	int i_filename;
 	for(i_filename = 0; i_filename < file_count; i_filename++)
 	{
