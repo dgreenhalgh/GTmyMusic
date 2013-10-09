@@ -1,6 +1,9 @@
 # Generated Files
 musicClient
 musicServer
+serverSongs/
+clientSongs/
+.DS_Store
 
 # Object files
 *.o

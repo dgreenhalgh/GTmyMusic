@@ -28,6 +28,7 @@ void print_main_menu_options();
 void init_connection(char*, unsigned short);
 void create_tcp_socket(int*);
 char* recieve_message();
+int compare_files(char*, char*);
 
 /* Strings.xml */
 char* commands[] = {"LIST", "DIFF", "PULL", "PLL1", "PLL2", "PLL3", "LEAF"};
@@ -41,6 +42,8 @@ struct sockaddr_in serv_addr;
 
 char rcv_buffer[RCVBUFSIZE];
 char send_buffer[SNDBUFSIZE];
+int total_bytes_rcvd = 0;
+int num_bytes_rcvd = 0;
 
 char* server_ip = "127.0.0.1"; 		// temp
 unsigned short server_port = 2013; 	// temp
@@ -92,6 +95,7 @@ int main(int argc, char *argv[])
 		if(strcmp(argv[1], "list") == 0)
 		{
 			send_command(LIST);
+			printf("Command Sent!\n");
 		}
 		else if(strcmp(argv[1], "diff") == 0)
 		{
@@ -110,10 +114,16 @@ int main(int argc, char *argv[])
 			printf("%s", bad_command);
 		}
 	}
+	else if(argc == 3)
+	{
+		printf("%d\n", compare_files(argv[1], argv[2]));
+	}
 	else
 	{
 		printf("%s", bad_number_of_commands);
 	}
+
+	printf("End of Client MAIN.\n");
 }
 
 /*
@@ -131,29 +141,31 @@ int send_command(int cmd)
 	printf("Connected\n");
 
 	size_t echo_string_len = sizeof(char);
-	printf("%zu", echo_string_len);
+	printf("echo_string_len = %zu\n", echo_string_len);
 
 	/* Send command string to the server */
 	size_t num_bytes = send(client_sock, &user_command, echo_string_len, 0); 
-	printf("%zu", num_bytes);
+	printf("num_bytes = %zu\n", num_bytes);
 
-	if((num_bytes < 0) || (num_bytes != echo_string_len))
+	if(num_bytes != echo_string_len)
 		switch_state(ERROR_STATE);
 
 	/* Receive command back */
-	unsigned int total_bytes_rcvd = 0;
 
 	// Note: all commands are 4 chars in length
 	size_t command_length = sizeof(char);
-	printf("%zu", command_length);
-	size_t num_command_bytes;
+	printf("Command Length = %zu\n", command_length);
 
 	/* Read command name */
+	printf("Read command name\n");
 	char command_name_buffer[2];
+
+	num_bytes_rcvd = 0;
+	total_bytes_rcvd = 0;
 	while(total_bytes_rcvd < command_length)
 	{
-		num_command_bytes = recv(client_sock, command_name_buffer, sizeof(char), 0);
-		total_bytes_rcvd += num_command_bytes;
+		num_bytes_rcvd = recv(client_sock, command_name_buffer, sizeof(char), 0);
+		total_bytes_rcvd += num_bytes_rcvd;
 	}
 
 	char filenames_length_buffer[sizeof(size_t)];
@@ -165,12 +177,31 @@ int send_command(int cmd)
 	{
 		case(LIST):
 		{
-			recv(client_sock, filenames_length_buffer, sizeof(size_t), 0);
+			printf("inside of LIST\n");
+			
+			num_bytes_rcvd = 0;
+			total_bytes_rcvd = 0;
+			while(total_bytes_rcvd < command_length) {
+				num_bytes_rcvd = recv(client_sock, filenames_length_buffer, sizeof(size_t), 0);
+				total_bytes_rcvd += num_bytes_rcvd;
+			}
 
-			char serialized_server_filenames_buffer[sizeof(filenames_length_buffer)];
-			recv(client_sock, serialized_server_filenames_buffer, sizeof(serialized_server_filenames_buffer), 0);
+			int server_filenames_length = 100; //atoi(filenames_length_buffer);
+			printf("server_filenames_length = %d\n", server_filenames_length);
 
-			printf("%s\n", serialized_server_filenames_buffer);
+			char serialized_server_filenames_buffer[server_filenames_length];
+			
+			num_bytes_rcvd = 0;
+			total_bytes_rcvd = 0;
+			while(total_bytes_rcvd < server_filenames_length) {
+				num_bytes_rcvd = recv(client_sock, serialized_server_filenames_buffer, server_filenames_length, 0);
+				total_bytes_rcvd += num_bytes_rcvd;
+				printf("total_bytes_rcvd = %d\n", total_bytes_rcvd);
+				printf("serialized_server_filenames_buffer = %s\n", serialized_server_filenames_buffer);
+			}
+			
+			printf("FINAL serialized buffer = %s\n", serialized_server_filenames_buffer);
+
 
 			// tokenize filenames
 			char* server_filenames[100];
@@ -236,7 +267,7 @@ int send_command(int cmd)
 		printf("%s\n", strtok(serialized_server_filenames_buffer, ".mp3")); // for testing
 
 		//char* reinflated_server_filenames[MAX_NUM_FILES] = strtok(serialized_server_filenames_buffer, ".mp3");
-		/*int i_filename;
+		int i_filename;
 		for(i_filename = 0; i_filename < MAX_NUM_FILES; i_filename++)
 		{
 			if(reinflated_server_filenames[i_filename])
@@ -296,6 +327,8 @@ int send_command(int cmd)
 
 		fputs(buffer, stdout); // temp
 	}*/
+
+	//printf("End of send command.\n");
 
 	return cmd;
 }
@@ -384,4 +417,32 @@ void create_tcp_socket(int* p_client_socket)
 
 	if(p_client_socket < 0)
 		switch_state(ERROR_STATE);
+}
+
+int compare_files(char* filename_a, char* filename_b)
+{
+	FILE* file_a = fopen(filename_a, "r");
+	FILE* file_b = fopen(filename_b, "r");
+
+	char file_buffer_a[100000]; // Assuming we won't have a song file length over 100MB
+	char file_buffer_b[100000];
+
+	int ret_val = 1, var = 0;
+
+	while(((fgets(file_buffer_a, 1000, file_a)) && (fgets(file_buffer_b, 1000, file_b))))
+	{
+		var = strcmp(file_buffer_a, file_buffer_b);
+		if(var != 0)
+		{
+			printf("Files differ\n");
+			fclose(file_a);
+			fclose(file_b);
+			ret_val = 0;
+			return ret_val;
+			exit(0);
+		}
+	}
+
+	printf("Same files");
+	return(1);
 }
