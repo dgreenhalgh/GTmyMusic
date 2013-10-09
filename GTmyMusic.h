@@ -31,8 +31,16 @@
 	#define LEAVE 6
 	#define COMP 7
 
+	#define ONE		1
+	#define TWO		2
+	#define THREE	3
+	#define FOUR	4
+
+	#define HASHSIZE 101
+
 	/* Function prototypes */
 	unsigned hash(char *s);
+		
 
 	/* Message Structures */
 	typedef struct {
@@ -61,10 +69,8 @@
 
 	typedef struct {
 		char command;
-		int requested_filenames_length;
-    	char* requested_serialized_server_filenames;
     	int files_length;
-		FILE* server_files;
+		char* server_files;
 	} pull_message_3;
 
 	typedef struct {
