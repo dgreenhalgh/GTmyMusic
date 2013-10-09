@@ -20,6 +20,7 @@
 	#include <openssl/evp.h>    /* for OpenSSL EVP digest libraries/SHA256 */
 	#include <pthread.h>		/* for parallel processing */
 	#include <dirent.h>
+	#include <sys/stat.h>
 
 	/* Commands */
 	#define LIST 0
@@ -29,11 +30,17 @@
 	#define PLL2 4
 	#define PLL3 5
 	#define LEAVE 6
+	#define COMP 7
 
 	#define ONE		1
 	#define TWO		2
 	#define THREE	3
 	#define FOUR	4
+
+	#define HASHSIZE 101
+
+	/* Function prototypes */
+	unsigned hash(char *s);
 		
 
 	/* Message Structures */
@@ -63,9 +70,15 @@
 
 	typedef struct {
 		char command;
-		int files_length;
+    	int files_length;
 		char* server_files;
 	} pull_message_3;
+
+	typedef struct {
+		char command;
+		int client_file_length;
+		unsigned client_file_hash;
+	} hash_compare_message;
 
 	typedef struct {
 		char command;
