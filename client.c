@@ -370,6 +370,11 @@ int send_command(int cmd)
 			printf("PLL3 ??\n");
 		    break; // Necessary for Case:  // Never reached?
 		}
+		case(COMP):
+		{
+
+			break;
+		}
 		case(LEAVE):
 		{
 			// do anything with connection?
@@ -516,39 +521,44 @@ int compare_files(char* local_filename)
 		exit(1);
 	}
 
-	hash_compare new_hash_compare;
-	new_hash_compare.command = COMP;
-	new_hash_compare.client_file_length = f_size;
-	new_hash_compare.client_file_hash = hash(f_buffer);
+	hash_compare_message new_hash_compare_message;
+	new_hash_compare_message.command = COMP;
+	new_hash_compare_message.client_file_length = f_size;
+	new_hash_compare_message.client_file_hash = hash(f_buffer);
 
 	fclose(l_file);
 	free(buffer);
 
-	send_command("COMP");
+	size_t command_length = sizeof(char);
+	char user_command = (char)(((int)'0')+cmd);
 
+	init_connection(server_ip, server_port);
+	printf("Connected\n");
 
-	/*FILE* file_b = fopen(filename_b, "r");
-
-	char file_buffer_a[100000]; // Assuming we won't have a song file length over 100MB
-	char file_buffer_b[100000];
-
-	int ret_val = 1, var = 0;
-
-	while(((fgets(file_buffer_a, 1000, file_a)) && (fgets(file_buffer_b, 1000, file_b))))
-	{
-		var = strcmp(file_buffer_a, file_buffer_b);
-		if(var != 0)
-		{
-			printf("Files differ\n");
-			fclose(file_a);
-			fclose(file_b);
-			ret_val = 0;
-			return ret_val;
-			exit(0);
-		}
+	/* Send command string to the server */
+	num_bytes_sent = 0;
+	total_bytes_sent = 0;
+	//memset(&user_command, 0, sizeof(cmd) + 1);
+	while(total_bytes_sent < command_length) {
+		num_bytes_sent = send(client_sock, &new_hash_compare_message.command, command_length, 0); 
+		total_bytes_sent += num_bytes_sent;
+	}
+	if(num_bytes_sent != command_length) {
+		switch_state(ERROR_STATE);
 	}
 
-	printf("Same files");*/
+	char* serialized_client_file_len = (char*) malloc(new_hash_compare_message.client_file_length);
+	while(total_bytes_sent < sizeof(new_hash_compare_message.client_file_length)) {
+        num_bytes_sent = send(client_sock, &hash_compare_message.client_file_length, sizeof(new_hash_compare_message.client_file_length), 0);
+        total_bytes_sent += num_bytes_sent;
+    }
+
+	char* serialized_hash = (char*) malloc(new_hash_compare_message.client_file_hash);
+	while(total_bytes_sent < sizeof(new_hash_compare_message.client_file_hash)) {
+       num_bytes_sent = send(client_sock, &new_hash_compare_message.client_file_hash, sizeof(new_hash_compare_message.client_file_hash), 0);
+       total_bytes_sent += num_bytes_sent;
+    }
+
 	return(1);
 }
 
