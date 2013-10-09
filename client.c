@@ -42,6 +42,8 @@ struct sockaddr_in serv_addr;
 
 char rcv_buffer[RCVBUFSIZE];
 char send_buffer[SNDBUFSIZE];
+int total_bytes_rcvd = 0;
+int num_bytes_rcvd = 0;
 
 char* server_ip = "127.0.0.1"; 		// temp
 unsigned short server_port = 2013; 	// temp
@@ -149,21 +151,21 @@ int send_command(int cmd)
 		switch_state(ERROR_STATE);
 
 	/* Receive command back */
-	unsigned int total_bytes_rcvd = 0;
 
 	// Note: all commands are 4 chars in length
 	size_t command_length = sizeof(char);
 	printf("Command Length = %zu\n", command_length);
-	size_t num_command_bytes;
 
 	/* Read command name */
 	printf("Read command name\n");
 	char command_name_buffer[2];
+
+	num_bytes_rcvd = 0;
+	total_bytes_rcvd = 0;
 	while(total_bytes_rcvd < command_length)
 	{
-		num_command_bytes = recv(client_sock, command_name_buffer, sizeof(char), 0);
-		total_bytes_rcvd += num_command_bytes;
-		printf("while looping\n");
+		num_bytes_rcvd = recv(client_sock, command_name_buffer, sizeof(char), 0);
+		total_bytes_rcvd += num_bytes_rcvd;
 	}
 
 	char filenames_length_buffer[sizeof(size_t)];
@@ -175,27 +177,31 @@ int send_command(int cmd)
 	{
 		case(LIST):
 		{
-			printf("inside of list\n");
-			recv(client_sock, filenames_length_buffer, sizeof(size_t), 0);
-			printf("filenames_length_buffer = %s\n", filenames_length_buffer);
+			printf("inside of LIST\n");
 			
-			int server_filenames_length = (int) filenames_length_buffer;
-			server_filenames_length = 80;
+			num_bytes_rcvd = 0;
+			total_bytes_rcvd = 0;
+			while(total_bytes_rcvd < command_length) {
+				num_bytes_rcvd = recv(client_sock, filenames_length_buffer, sizeof(size_t), 0);
+				total_bytes_rcvd += num_bytes_rcvd;
+			}
+
+			int server_filenames_length = 100; //atoi(filenames_length_buffer);
 			printf("server_filenames_length = %d\n", server_filenames_length);
 
 			char serialized_server_filenames_buffer[server_filenames_length];
 			
-			int num_bytes_rcvd = 0;
+			num_bytes_rcvd = 0;
 			total_bytes_rcvd = 0;
 			while(total_bytes_rcvd < server_filenames_length) {
-				printf("total_bytes_rcvd = %d\n", total_bytes_rcvd);
 				num_bytes_rcvd = recv(client_sock, serialized_server_filenames_buffer, server_filenames_length, 0);
 				total_bytes_rcvd += num_bytes_rcvd;
+				printf("total_bytes_rcvd = %d\n", total_bytes_rcvd);
+				printf("serialized_server_filenames_buffer = %s\n", serialized_server_filenames_buffer);
 			}
 			
-			printf("serialized = %s\n", serialized_server_filenames_buffer);
+			printf("FINAL serialized buffer = %s\n", serialized_server_filenames_buffer);
 
-			printf("%s\n", serialized_server_filenames_buffer);
 
 			// tokenize filenames
 			// print filenames
