@@ -416,6 +416,7 @@ printf("debug\n");
 
 int comp(int thread_index)
 {
+    /* client_file_length*/
     char* client_file_length_buffer[sizeof(int)];
     memset(&client_file_length_buffer, 0, sizeof(int));
 
@@ -428,7 +429,31 @@ int comp(int thread_index)
 
     int client_file_length = *(int*) client_file_length_buffer;
 
-    //char* client_file_hash_buffer = (char*) malloc()
+    /* client_file_hash_length */
+    /*char* client_file_hash_length_buffer[sizeof(int)];
+    memset(&client_file_hash_length_buffer, 0, sizeof(int));
+
+    num_bytes_recv[thread_index] = 0;
+    total_bytes_recv[thread_index] = 0;
+    while(total_bytes_recv[thread_index] < sizeof(int)) {
+        num_bytes_recv[thread_index] = recv(helper_struct[thread_index].socket, client_file_hash_length_buffer, sizeof(int), 0);
+        total_bytes_recv[thread_index] += num_bytes_recv[thread_index];
+    }
+
+    int client_file_hash_length = *(int*) client_file_hash_length_buffer;*/
+
+    /* client_file_hash */
+    char* client_file_hash_buffer[sizeof(unsigned)];
+    memset(client_file_hash_buffer, 0, sizeof(unsigned));
+    num_bytes_sent[thread_index] = 0;
+    total_bytes_sent[thread_index] = 0;
+    while(total_bytes_recv[thread_index] < sizeof(unsigned))
+    {
+        num_bytes_recv[thread_index] = recv(helper_struct[thread_index].socket, client_file_hash_buffer, sizeof(unsigned), 0);
+        total_bytes_recv[thread_index] += num_bytes_recv[thread_index];
+    }
+
+    unsigned client_file_hash = *(unsigned*) client_file_hash_buffer;
 
 }
 
