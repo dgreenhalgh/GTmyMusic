@@ -16,12 +16,9 @@
 
 #define ASCII_CORRECTOR (-49)
 
-#define RCVBUFSIZE 512		    /* The receive buffer size */
-#define SNDBUFSIZE 512		    /* The send buffer size */
-
 #define MAX_NUM_FILES 10
 
-/* Function pointers */
+/* Function Prototypes */
 int send_command(int);
 int switch_state(int);
 void print_main_menu_options();
@@ -37,13 +34,18 @@ const char* bad_command = "Command not recognized, exiting now.\n";
 const char* bad_number_of_commands = "Improper number of args, exiting now.\nCommand line menu usage: ./musicClient\nDirect command usage: ./musicClient <command>\n";
 
 /* Socket info */
-int client_sock, i_file, num_files; // no camel case
+int client_sock, i_file, num_files;
 struct sockaddr_in serv_addr;
 
-char rcv_buffer[RCVBUFSIZE];
-char send_buffer[SNDBUFSIZE];
-int total_bytes_rcvd = 0;
 int num_bytes_rcvd = 0;
+int total_bytes_rcvd = 0;
+int num_bytes_sent = 0;
+int total_bytes_sent = 0;
+
+/* Send and Receive buffers */
+char command_name_buffer[2];
+char filenames_length_buffer[sizeof(int)];
+char files_length_buffer[sizeof(size_t)];  // not sure what for?
 
 char* server_ip = "127.0.0.1"; 		// temp
 unsigned short server_port = 2013; 	// temp
@@ -58,6 +60,7 @@ size_t local_file_lengths[MAX_NUM_FILES]; // replace NUM_FILES
  */
 int main(int argc, char *argv[])
 {
+	printf("sizeof size_t = %zu\n", sizeof(size_t));
 	/* Read in local files */
 	printf("Reading local files...\n");
 	DIR *dir;
@@ -83,11 +86,9 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if(argc == 1)
-	{
+	if(argc == 1) {
 		/* Command line interface */
 		switch_state(START_STATE);
-
 	}
 	else if(argc == 2)
 	{
@@ -134,42 +135,42 @@ int main(int argc, char *argv[])
  */
 int send_command(int cmd)
 {
+	/* memset buffers */
+	//memset(&send_buffer, 0, SNDBUFSIZE); // example
+
+
+	size_t command_length = sizeof(char);
 	char user_command = (char)(((int)'0')+cmd);
 	printf("%c\n", user_command);
 
 	init_connection(server_ip, server_port);
 	printf("Connected\n");
 
-	size_t echo_string_len = sizeof(char);
-	printf("echo_string_len = %zu\n", echo_string_len);
-
 	/* Send command string to the server */
-	size_t num_bytes = send(client_sock, &user_command, echo_string_len, 0); 
-	printf("num_bytes = %zu\n", num_bytes);
-
-	if(num_bytes != echo_string_len)
+	num_bytes_sent = 0;
+	total_bytes_sent = 0;
+	//memset(&user_command, 0, sizeof(cmd) + 1);
+	while(total_bytes_sent < command_length) {
+		num_bytes_sent = send(client_sock, &user_command, command_length, 0); 
+		total_bytes_sent += num_bytes_sent;
+	}
+	if(num_bytes_sent != command_length) {
 		switch_state(ERROR_STATE);
+	}
 
-	/* Receive command back */
+	/* Get response */
 
-	// Note: all commands are 4 chars in length
-	size_t command_length = sizeof(char);
-	printf("Command Length = %zu\n", command_length);
 
 	/* Read command name */
 	printf("Read command name\n");
-	char command_name_buffer[2];
-
+	memset(&command_name_buffer, 0, sizeof(char));
 	num_bytes_rcvd = 0;
 	total_bytes_rcvd = 0;
-	while(total_bytes_rcvd < command_length)
-	{
+	while(total_bytes_rcvd < command_length) {
 		num_bytes_rcvd = recv(client_sock, command_name_buffer, sizeof(char), 0);
 		total_bytes_rcvd += num_bytes_rcvd;
 	}
 
-	char filenames_length_buffer[sizeof(size_t)];
-	char files_length_buffer[sizeof(size_t)];
 	printf("we have a command\n");
 	printf("%c\n", command_name_buffer[0]);
 
@@ -179,18 +180,21 @@ int send_command(int cmd)
 		{
 			printf("inside of LIST\n");
 			
+			memset(&filenames_length_buffer, 0, sizeof(int));
 			num_bytes_rcvd = 0;
 			total_bytes_rcvd = 0;
-			while(total_bytes_rcvd < command_length) {
-				num_bytes_rcvd = recv(client_sock, filenames_length_buffer, sizeof(size_t), 0);
+			while(total_bytes_rcvd < sizeof(int)) {
+				num_bytes_rcvd = recv(client_sock, filenames_length_buffer, sizeof(int), 0);
 				total_bytes_rcvd += num_bytes_rcvd;
 			}
 
+			// FIX
 			int server_filenames_length = 100; //atoi(filenames_length_buffer);
 			printf("server_filenames_length = %d\n", server_filenames_length);
 
+
 			char serialized_server_filenames_buffer[server_filenames_length];
-			
+			memset(&serialized_server_filenames_buffer, 0, server_filenames_length);
 			num_bytes_rcvd = 0;
 			total_bytes_rcvd = 0;
 			while(total_bytes_rcvd < server_filenames_length) {
@@ -337,7 +341,6 @@ int switch_state(int state)
 		send_command(getchar() + ASCII_CORRECTOR); 
 
 		close(client_sock);
-
 	}
 	else if(state == ERROR_STATE)
 	{
@@ -362,10 +365,6 @@ void print_main_menu_options()
  */
 void init_connection(char* serv_ip, unsigned short serv_port)
 {
-	memset(&send_buffer, 0, SNDBUFSIZE);
-	memset(&rcv_buffer, 0, RCVBUFSIZE);
-	printf("memset\n");
-
 	create_tcp_socket(&client_sock);
 	printf("Created TCP socket\n");
 
@@ -376,22 +375,18 @@ void init_connection(char* serv_ip, unsigned short serv_port)
 
 	/* Convert address */
 	int ret_val = inet_pton(AF_INET, serv_ip, &serv_addr.sin_addr.s_addr);
-
-	if(ret_val <= 0)
+	if(ret_val <= 0) {
 		switch_state(ERROR_STATE);
-
+	}
 	serv_addr.sin_port = htons(serv_port);
-
-	printf("Convert address\n");
+	printf("Converted address\n");
 
 	/* Establish connection */
-	if(connect(client_sock, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
-	{
+	if(connect(client_sock, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
 		printf("conn fail\n");
 		switch_state(ERROR_STATE);
 	}
-
-	printf("Establish connection\n");
+	printf("Established connection\n");
 }
 
 /*
