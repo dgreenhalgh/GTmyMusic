@@ -39,25 +39,27 @@
 
 	typedef struct {
 		char command;
-		size_t filenames_length;
+		int filenames_length;
 		char* serialized_server_filenames;
 	} diff_message;
 
 	typedef struct {
 		char command;
-		size_t filenames_length;
+		int filenames_length;
 		char* serialized_server_filenames;
 	} pull_message_1;
 
 	typedef struct {
 		char command;
-		size_t filenames_length;
+		int filenames_length;
 		char* serialized_client_filenames;
 	} pull_message_2;
 
 	typedef struct {
 		char command;
-		size_t files_length;
+		int requested_filenames_length;
+		char* requested_serialized_server_filenames;
+		int files_length;
 		FILE* server_files;
 	} pull_message_3;
 
