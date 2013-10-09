@@ -559,6 +559,8 @@ int compare_files(char* local_filename)
        total_bytes_sent += num_bytes_sent;
     }
 
+    //TODO: serverside hash_cmp
+
 	return(1);
 }
 
