@@ -64,7 +64,7 @@
 	typedef struct {
 		char command;
 		int files_length;
-		FILE* server_files;
+		char* server_files;
 	} pull_message_3;
 
 	typedef struct {
