@@ -30,6 +30,7 @@
 	#define PLL1 4
 	#define PLL2 5
 	#define PLL3 6
+	#define COMP 7
 
 	#define ONE		1
 	#define TWO		2
