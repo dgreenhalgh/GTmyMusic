@@ -20,6 +20,7 @@
 int list(int);
 int diff(int);
 int pull(int);
+int comp(int);
 int leave(int);
 int get_filenames_length(char*[]);
 char* serialize_filenames(char*[], char*);
@@ -169,6 +170,8 @@ void command_handler(void* helper_struct) {
 			diff(p_helper_struct->socket_index);
 		case(PULL):
 			pull(p_helper_struct->socket_index);
+        case(COMP):
+            comp(p_helper_struct->socket_index);
 		case(LEAVE):
 			leave(p_helper_struct->socket_index);
 		default:
@@ -354,7 +357,8 @@ printf("debug\n");
     FILE* requested_files[diff_count];
     char* serialized_files1 = (char*) malloc(1);
     char* serialized_files2 = (char*) malloc(1);
-    for (int i=0; i<diff_count; i++) {
+    int i;
+    for (i=0; i<diff_count; i++) {
 printf("debug\n");        
 
         char* path = strcat("./serverSongs/", requested_filenames[i]);
@@ -408,6 +412,24 @@ printf("debug\n");
     }
 		
 	return(0); // unused for now
+}
+
+int comp(int thread_index)
+{
+    char* client_file_length_buffer[sizeof(int)];
+    memset(&client_file_length_buffer, 0, sizeof(int));
+
+    num_bytes_recv[thread_index] = 0;
+    total_bytes_recv[thread_index] = 0;
+    while(total_bytes_recv[thread_index] < sizeof(int)) {
+        num_bytes_recv[thread_index] = recv(helper_struct[thread_index].socket, client_file_length_buffer, sizeof(int), 0);
+        total_bytes_recv[thread_index] += num_bytes_recv[thread_index];
+    }
+
+    int client_file_length = *(int*) client_file_length_buffer;
+
+    //char* client_file_hash_buffer = (char*) malloc()
+
 }
 
 /* 

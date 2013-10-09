@@ -500,7 +500,7 @@ int compare_files(char* local_filename)
 	char* f_buffer;
 
 	/* FILE* to CHAR* */
-	FILE* l_file = fopen(filename_a, "r");
+	FILE* l_file = fopen(local_filename, "r");
 	fseek(l_file, 0L, SEEK_END);
 	f_size = ftell(l_file);
 	rewind(l_file);
@@ -513,7 +513,7 @@ int compare_files(char* local_filename)
 		exit(1);
 	}
 
-	if(1 != fread(f_buffer, f_size, 1, f_size))
+	if(1 != fread(f_buffer, f_size, 1, l_file))
 	{
 		fclose(l_file);
 		free(f_buffer);
@@ -525,12 +525,13 @@ int compare_files(char* local_filename)
 	new_hash_compare_message.command = COMP;
 	new_hash_compare_message.client_file_length = f_size;
 	new_hash_compare_message.client_file_hash = hash(f_buffer);
+	new_hash_compare_message.client_file_hash_length = sizeof(new_hash_compare_message.client_file_hash_length);
 
 	fclose(l_file);
-	free(buffer);
+	free(f_buffer);
 
 	size_t command_length = sizeof(char);
-	char user_command = (char)(((int)'0')+cmd);
+	char user_command = (char)(((int)'0')+COMP);
 
 	init_connection(server_ip, server_port);
 	printf("Connected\n");
@@ -547,12 +548,25 @@ int compare_files(char* local_filename)
 		switch_state(ERROR_STATE);
 	}
 
+	num_bytes_sent = 0;
+	total_bytes_sent = 0;
 	char* serialized_client_file_len = (char*) malloc(new_hash_compare_message.client_file_length);
 	while(total_bytes_sent < sizeof(new_hash_compare_message.client_file_length)) {
-        num_bytes_sent = send(client_sock, &hash_compare_message.client_file_length, sizeof(new_hash_compare_message.client_file_length), 0);
+        num_bytes_sent = send(client_sock, &new_hash_compare_message.client_file_length, sizeof(new_hash_compare_message.client_file_length), 0);
         total_bytes_sent += num_bytes_sent;
     }
 
+    num_bytes_sent = 0;
+	total_bytes_sent = 0;
+    char* serialized_client_file_hash_len = (char*) malloc(new_hash_compare_message.client_file_hash_length);
+    while(total_bytes_sent < sizeof(new_hash_compare_message.client_file_hash_length))
+    {
+    	num_bytes_sent = send(client_sock, &new_hash_compare_message.client_file_hash_length, sizeof(new_hash_compare_message.client_file_hash_length), 0);
+    	total_bytes_sent += num_bytes_sent;
+    }
+
+    num_bytes_sent = 0;
+	total_bytes_sent = 0;
 	char* serialized_hash = (char*) malloc(new_hash_compare_message.client_file_hash);
 	while(total_bytes_sent < sizeof(new_hash_compare_message.client_file_hash)) {
        num_bytes_sent = send(client_sock, &new_hash_compare_message.client_file_hash, sizeof(new_hash_compare_message.client_file_hash), 0);
@@ -579,7 +593,8 @@ int get_filenames_length(int file_count, char* filenames[])
 
 void serialize_filenames(int file_count, char* filenames[], char* spaghetti)
 {
-	for(int i_filename = 0; i_filename < file_count; i_filename++)
+	int i_filename;
+	for(i_filename = 0; i_filename < file_count; i_filename++)
 	{
 		strcat(strcat(spaghetti, filenames[i_filename]), "\n");
 	}
