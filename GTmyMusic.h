@@ -77,7 +77,6 @@
 	typedef struct {
 		char command;
 		int client_file_length;
-		//int client_file_hash_length;
 		unsigned client_file_hash;
 	} hash_compare_message;
 
