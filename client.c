@@ -30,7 +30,7 @@ int get_filenames_length(int, char*[]);
 void serialize_filenames(int , char*[], char*);
 
 /* Strings.xml */
-char* commands[] = {"LIST", "DIFF", "PULL", "PLL1", "PLL2", "PLL3", "LEAF"};
+char* commands[] = {"LIST", "DIFF", "PULL", "LEAF", "PLL1", "PLL2", "PLL3"};
 
 const char* bad_command = "Command not recognized, exiting now.\n";
 const char* bad_number_of_commands = "Improper number of args, exiting now.\nCommand line menu usage: ./musicClient\nDirect command usage: ./musicClient <command>\n";

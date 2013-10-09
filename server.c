@@ -422,7 +422,7 @@ int leave(int thread_index)
 	//strcpy(new_leave_message.command_name, "LEAF");
 	new_leave_message.command = (char)(((int)'0')+LEAVE);
 
-	send(server_socket, &new_leave_message.command, sizeof(new_leave_message.command), 0);
+	send(server_socket, &new_leave_message.command, sizeof(new_leave_message.command), 0); // change socket
 
 	return(0); // unused for now
 }
