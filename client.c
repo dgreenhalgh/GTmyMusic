@@ -25,7 +25,7 @@ void print_main_menu_options();
 void init_connection(char*, unsigned short);
 void create_tcp_socket(int*);
 char* recieve_message();
-int compare_files(char*, char*);
+int compare_files(char*);
 int get_filenames_length(int, char*[]);
 void serialize_filenames(int , char*[], char*);
 
@@ -48,6 +48,7 @@ int total_bytes_sent = 0;
 char command_name_buffer[2];
 char filenames_length_buffer[sizeof(int)];
 char files_length_buffer[sizeof(size_t)];  // not sure what for?
+off_t file_lengths[MAX_NUM_FILES];
 
 char* server_ip = "127.0.0.1"; 		// temp
 unsigned short server_port = 2013; 	// temp
@@ -72,6 +73,8 @@ int main(int argc, char *argv[])
 	
 	char* full_dir = strcat(cwd, "/clientSongs/");
 
+	struct stat st;
+
 	if((dir = opendir(full_dir)) != NULL)
 	{
 		int count = 0;
@@ -81,6 +84,11 @@ int main(int argc, char *argv[])
 				(strcmp(ent->d_name, "..") != 0) &&
 				(strcmp(ent->d_name, ".DS_Store") != 0))
 			{
+	    		long f_size;
+
+	    		/*stat(ent->d_name, &st);
+	    		file_lengths[count] = st.st_size;*/
+
 	    		local_filenames[count] = ent->d_name;
 	    		count++;
     		}
@@ -120,10 +128,9 @@ int main(int argc, char *argv[])
 			printf("%s", bad_command);
 		}
 	}
-	else if(argc == 3)
+	else if((argc == 3) && (strcmp(argv[1], "-c") == 0))
 	{
-		printf("Compare Files\n");
-		printf("%d\n", compare_files(argv[1], argv[2]));
+		compare_files(argv[2]);
 	}
 	else
 	{
@@ -338,7 +345,6 @@ int send_command(int cmd)
 
 	      	/* Send diff to server (PLL2) */
 	      	pull_message_2 new_pull_message_2;
-
 		    new_pull_message_2.command = (char)(((int)'0')+PLL2);
 		    new_pull_message_2.filenames_length = get_filenames_length(diff_len, diff);
 		    //printf("Server filenames_length = %d\n", new_pull_message_2.filenames_length);
@@ -461,6 +467,11 @@ int send_command(int cmd)
 			printf("PLL3 ??\n");
 		    break; // Necessary for Case:  // Never reached?
 		}
+		case(COMP):
+		{
+
+			break;
+		}
 		case(LEAVE):
 		{
 			// do anything with connection?
@@ -579,31 +590,98 @@ void create_tcp_socket(int* p_client_socket)
 		switch_state(ERROR_STATE);
 }
 
-int compare_files(char* filename_a, char* filename_b)
+// Not hash compare
+int compare_files(char* local_filename)
 {
-	FILE* file_a = fopen(filename_a, "r");
-	FILE* file_b = fopen(filename_b, "r");
+	long f_size;
+	char* f_buffer;
+	struct stat st;
 
-	char file_buffer_a[100000]; // Assuming we won't have a song file length over 100MB
-	char file_buffer_b[100000];
+	/* FILE* to CHAR* */
+	FILE* l_file = fopen(local_filename, "r");
+	/*fseek(l_file, 0L, SEEK_END);
+	f_size = ftell(l_file);
+	rewind(l_file);*/
 
-	int ret_val = 1, var = 0;
+	stat(local_filename, &st);
+	f_size = st.st_size;
 
-	while(((fgets(file_buffer_a, 1000, file_a)) && (fgets(file_buffer_b, 1000, file_b))))
+	printf("File: %s Size: %lu\n", local_filename, f_size);
+
+	f_buffer = calloc(1, f_size);
+
+	if(!f_buffer)
 	{
-		var = strcmp(file_buffer_a, file_buffer_b);
-		if(var != 0)
-		{
-			printf("Files differ\n");
-			fclose(file_a);
-			fclose(file_b);
-			ret_val = 0;
-			return ret_val;
-			exit(0);
-		}
+		fclose(l_file);
+		printf("eh\n");
+		printf("alloc fails\n");
+		exit(1);
+	}
+	
+
+	if(1 != fread(f_buffer, f_size, 1, l_file))
+	{
+		fclose(l_file);
+		free(f_buffer);
+		printf("fread fails\n");
+		exit(1);
 	}
 
-	printf("Same files");
+	printf("pased\n");
+	hash_compare_message new_hash_compare_message;
+	new_hash_compare_message.command = COMP;
+	new_hash_compare_message.client_file_length = f_size;
+	new_hash_compare_message.client_file_hash = hash(f_buffer);
+	//new_hash_compare_message.client_file_hash_length = sizeof(new_hash_compare_message.client_file_hash_length);
+
+	fclose(l_file);
+	free(f_buffer);
+
+	size_t command_length = sizeof(char);
+	char user_command = (char)(((int)'0')+COMP);
+
+	init_connection(server_ip, server_port);
+	printf("Connected\n");
+
+	/* Send command string to the server */
+	num_bytes_sent = 0;
+	total_bytes_sent = 0;
+	//memset(&user_command, 0, sizeof(cmd) + 1);
+	while(total_bytes_sent < command_length) {
+		num_bytes_sent = send(client_sock, &new_hash_compare_message.command, command_length, 0); 
+		total_bytes_sent += num_bytes_sent;
+	}
+	if(num_bytes_sent != command_length) {
+		switch_state(ERROR_STATE);
+	}
+
+	num_bytes_sent = 0;
+	total_bytes_sent = 0;
+	char* serialized_client_file_len = (char*) malloc(new_hash_compare_message.client_file_length);
+	while(total_bytes_sent < sizeof(new_hash_compare_message.client_file_length)) {
+        num_bytes_sent = send(client_sock, &new_hash_compare_message.client_file_length, sizeof(new_hash_compare_message.client_file_length), 0);
+        total_bytes_sent += num_bytes_sent;
+    }
+
+    /*num_bytes_sent = 0;
+	total_bytes_sent = 0;
+    char* serialized_client_file_hash_len = (char*) malloc(new_hash_compare_message.client_file_hash_length);
+    while(total_bytes_sent < sizeof(new_hash_compare_message.client_file_hash_length))
+    {
+    	num_bytes_sent = send(client_sock, &new_hash_compare_message.client_file_hash_length, sizeof(new_hash_compare_message.client_file_hash_length), 0);
+    	total_bytes_sent += num_bytes_sent;
+    }*/
+
+    num_bytes_sent = 0;
+	total_bytes_sent = 0;
+	char* serialized_hash = (char*) malloc(new_hash_compare_message.client_file_hash);
+	while(total_bytes_sent < sizeof(new_hash_compare_message.client_file_hash)) {
+       num_bytes_sent = send(client_sock, &new_hash_compare_message.client_file_hash, sizeof(new_hash_compare_message.client_file_hash), 0);
+       total_bytes_sent += num_bytes_sent;
+    }
+
+    //TODO: serverside hash_cmp
+
 	return(1);
 }
 
@@ -627,4 +705,14 @@ void serialize_filenames(int file_count, char* filenames[], char* spaghetti)
 	{
 		strcat(strcat(spaghetti, filenames[i_filename]), "\n");
 	}
+}
+
+unsigned hash(char *s)
+{
+	unsigned hashval;
+
+	for(hashval = 0;  *s != '\0'; s++)
+		hashval = *s + 31 * hashval;
+
+	return hashval % HASHSIZE;
 }

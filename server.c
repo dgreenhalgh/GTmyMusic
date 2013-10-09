@@ -20,6 +20,7 @@
 int list(int);
 int diff(int);
 int pull(int);
+int comp(int);
 int leave(int);
 int get_filenames_length(char*[]);
 char* serialize_filenames(char*[], char*);
@@ -38,6 +39,7 @@ int i_file;
 FILE* server_files[NUM_FILES];
 char* server_filenames[NUM_FILES];
 size_t server_file_lengths[NUM_FILES];
+off_t file_lengths[NUM_FILES];
 int filenames_count = 0;  // Manage: inc++ and decr-- as needed!!
 
 /* pthreads */
@@ -68,6 +70,9 @@ int main(int argc, char *argv[])
 	char *wd = getcwd(cwd, sizeof(cwd));//, sizeof(cwd));	
 	char* full_dir = strcat(cwd, "/serverSongs/");
 
+    //FILE* fp;
+    struct stat st;
+
 	if((dir = opendir(full_dir)) != NULL) {
 		int count = 0;
 		while ((ent = readdir (dir)) != NULL) {
@@ -75,7 +80,22 @@ int main(int argc, char *argv[])
 				(strcmp(ent->d_name, "..") != 0) &&
 				(strcmp(ent->d_name, ".DS_Store") != 0))
 			{
+                long f_size;
+
 				server_filenames[count] = ent->d_name;
+
+                printf("%s\n", ent->d_name);
+                stat(ent->d_name, &st);
+                file_lengths[count] = st.st_size;
+                printf("%zd\n", file_lengths[count]);
+
+
+                //server_files[count] = (FILE*)malloc(sizeof(fopen(ent->d_name, "r")));
+                /*server_files[count] = fopen(ent->d_name, "r");
+                fseek(server_files[count], 0L, SEEK_END);
+                f_size = ftell(server_files[count]);
+                rewind(server_files[count]);*/
+
 				count++;
                 filenames_count++;
     		}
@@ -166,20 +186,35 @@ void command_handler(void* helper_struct) {
 	switch(command_buffer[0] - '0')
 	{
 		case(LIST):
+        {
 			list(p_helper_struct->socket_index);
             break;
+        }
 		case(DIFF):
+        {
 			diff(p_helper_struct->socket_index);
             break;
+        }
 		case(PULL):
+        {
 			pull(p_helper_struct->socket_index);
             break;
+        }
+        case(COMP):
+        {
+            comp(p_helper_struct->socket_index);
+            break;
+        }
 		case(LEAVE):
+        {
 			leave(p_helper_struct->socket_index);
             break;
+        }
 		default:
+        {
 			printf("%s\n", "Invalid command");
             break;
+        }
 	}
 
     // Cleanup socket and thread.
@@ -413,6 +448,83 @@ int pull(int thread_index)
 	return(0); // unused for now
 }
 
+int comp(int thread_index)
+{
+    /* client_file_length*/
+    char* client_file_length_buffer[sizeof(int)];
+    memset(&client_file_length_buffer, 0, sizeof(int));
+
+    num_bytes_recv[thread_index] = 0;
+    total_bytes_recv[thread_index] = 0;
+    while(total_bytes_recv[thread_index] < sizeof(int)) {
+        num_bytes_recv[thread_index] = recv(helper_struct[thread_index].socket, client_file_length_buffer, sizeof(int), 0);
+        total_bytes_recv[thread_index] += num_bytes_recv[thread_index];
+    }
+
+    int client_file_length = *(int*) client_file_length_buffer;
+
+    /* client_file_hash_length */
+    /*char* client_file_hash_length_buffer[sizeof(int)];
+    memset(&client_file_hash_length_buffer, 0, sizeof(int));
+
+    num_bytes_recv[thread_index] = 0;
+    total_bytes_recv[thread_index] = 0;
+    while(total_bytes_recv[thread_index] < sizeof(int)) {
+        num_bytes_recv[thread_index] = recv(helper_struct[thread_index].socket, client_file_hash_length_buffer, sizeof(int), 0);
+        total_bytes_recv[thread_index] += num_bytes_recv[thread_index];
+    }
+
+    int client_file_hash_length = *(int*) client_file_hash_length_buffer;*/
+
+    /* client_file_hash */
+    char* client_file_hash_buffer[sizeof(unsigned)];
+    memset(client_file_hash_buffer, 0, sizeof(unsigned));
+    num_bytes_sent[thread_index] = 0;
+    total_bytes_sent[thread_index] = 0;
+    while(total_bytes_recv[thread_index] < sizeof(unsigned))
+    {
+        num_bytes_recv[thread_index] = recv(helper_struct[thread_index].socket, client_file_hash_buffer, sizeof(unsigned), 0);
+        total_bytes_recv[thread_index] += num_bytes_recv[thread_index];
+    }
+
+    unsigned client_file_hash = *(unsigned*) client_file_hash_buffer;
+
+    /* Check lengths */
+    int i_len;
+    for(i_len = 0; i_len < NUM_FILES; i_len++)
+    {
+        long f_size = file_lengths[i_len]; // figure this out
+        if(f_size == client_file_length)
+        {
+            char* f_buffer = calloc(1, f_size + 1);
+            /*size_t sup = strlen(f_buffer)
+            printf("%d\n", sup);*/
+            if(!f_buffer)
+            {
+                fclose(server_files[i_len]);
+                printf("alloc fails\n");
+                exit(1);
+            }
+
+            if(1 != fread(f_buffer, f_size, 1, server_files[i_len]))
+            {
+                fclose(server_files[i_len]);
+                free(f_buffer);
+                printf("fread fails\n");
+                exit(1);
+            }
+
+            unsigned server_file_hash = hash(f_buffer);
+            if(server_file_hash == client_file_hash)
+            {
+                // send filename to client
+                printf("yay\n");
+            }
+
+        }
+    }
+}
+
 /* 
  * Command: LEAVE
  *
@@ -473,4 +585,14 @@ size_t get_files_length(int file_count, size_t files_list[])
 	}
 
 	return total_files_length;
+}
+
+unsigned hash(char *s)
+{
+    unsigned hashval;
+
+    for(hashval = 0;  *s != '\0'; s++)
+        hashval = *s + 31 * hashval;
+
+    return hashval % HASHSIZE;
 }
