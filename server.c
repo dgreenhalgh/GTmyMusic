@@ -84,10 +84,8 @@ int main(int argc, char *argv[])
 
 				server_filenames[count] = ent->d_name;
 
-                printf("%s\n", ent->d_name);
                 stat(ent->d_name, &st);
                 file_lengths[count] = st.st_size;
-                printf("%zd\n", file_lengths[count]);
 
 
                 //server_files[count] = (FILE*)malloc(sizeof(fopen(ent->d_name, "r")));
