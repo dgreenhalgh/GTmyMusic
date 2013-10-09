@@ -228,14 +228,48 @@ int send_command(int cmd)
 		}
 		case(DIFF):
 		{
-			recv(client_sock, filenames_length_buffer, sizeof(size_t), 0);
+			recv(client_sock, filenames_length_buffer, sizeof(int), 0);
 
 			char serialized_server_filenames_buffer[ sizeof(filenames_length_buffer)];
 			recv(client_sock, serialized_server_filenames_buffer, sizeof(serialized_server_filenames_buffer), 0);
 
-			// tokenize filenames
-			// diff filenames
-			// print diff
+			/* Tokenize filenames */
+	      	char* server_filenames[100];
+
+		    char s[2000];
+		    strcpy(s, serialized_server_filenames_buffer);
+		    char* t = strtok(s, "\n");
+		    int c = 0;
+		    while(t != NULL)
+		    {
+			    server_filenames[c] = t;
+			    t = strtok(NULL, "\n");
+			    c++;
+		    }
+
+		    // diff against local filenames
+		    char* diff[100];
+
+		    int i_server, diff_id = 0, diff_len = 0;
+		    for(i_server = 0; i_server < 10; i_server++)  // replace with num_serv_files
+		    {
+		        int i_local, no_match = 1;
+		        for(i_local = 0; i_local < num_files; i_local++)
+		        	no_match *= strcmp(local_filenames[i_local], server_filenames[i_server]);
+
+		        if(no_match != 0)
+		        {
+		        	diff[diff_id] = server_filenames[i_server];
+		            diff_id++;
+		        }
+
+		        diff_len = diff_id;
+	      	}
+
+	       	// print diff
+	      	int i_diff;
+	      	for(i_diff = 0; i_diff < diff_len; i_diff++)
+	        	printf("%s\n", diff[i_diff]);
 		}
 		case(PLL1):
 		{
