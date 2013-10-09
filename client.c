@@ -37,8 +37,8 @@ const char* bad_number_of_commands = "Improper number of args, exiting now.\nCom
 int client_sock, i_file, num_files;
 struct sockaddr_in serv_addr;
 
-int num_bytes_rcvd = 0;
-int total_bytes_rcvd = 0;
+int num_bytes_recv = 0;
+int total_bytes_recv = 0;
 int num_bytes_sent = 0;
 int total_bytes_sent = 0;
 
@@ -164,11 +164,11 @@ int send_command(int cmd)
 	/* Read command name */
 	printf("Read command name\n");
 	memset(&command_name_buffer, 0, sizeof(char));
-	num_bytes_rcvd = 0;
-	total_bytes_rcvd = 0;
-	while(total_bytes_rcvd < command_length) {
-		num_bytes_rcvd = recv(client_sock, command_name_buffer, sizeof(char), 0);
-		total_bytes_rcvd += num_bytes_rcvd;
+	num_bytes_recv = 0;
+	total_bytes_recv = 0;
+	while(total_bytes_recv < command_length) {
+		num_bytes_recv = recv(client_sock, command_name_buffer, sizeof(char), 0);
+		total_bytes_recv += num_bytes_recv;
 	}
 
 	printf("we have a command\n");
@@ -181,30 +181,36 @@ int send_command(int cmd)
 			printf("inside of LIST\n");
 			
 			memset(&filenames_length_buffer, 0, sizeof(int));
-			num_bytes_rcvd = 0;
-			total_bytes_rcvd = 0;
-			while(total_bytes_rcvd < sizeof(int)) {
-				num_bytes_rcvd = recv(client_sock, filenames_length_buffer, sizeof(int), 0);
-				total_bytes_rcvd += num_bytes_rcvd;
+			num_bytes_recv = 0;
+			total_bytes_recv = 0;
+			while(total_bytes_recv < sizeof(int)) {
+				num_bytes_recv = recv(client_sock, filenames_length_buffer, sizeof(int), 0);
+				total_bytes_recv += num_bytes_recv;
 			}
 
 			// FIX
-			int server_filenames_length = 100; //atoi(filenames_length_buffer);
+			int server_filenames_length = *(int*) filenames_length_buffer; //100; //atoi(filenames_length_buffer);
 			printf("server_filenames_length = %d\n", server_filenames_length);
 
-
-			char serialized_server_filenames_buffer[server_filenames_length];
-			memset(&serialized_server_filenames_buffer, 0, server_filenames_length);
-			num_bytes_rcvd = 0;
-			total_bytes_rcvd = 0;
-			while(total_bytes_rcvd < server_filenames_length) {
-				num_bytes_rcvd = recv(client_sock, serialized_server_filenames_buffer, server_filenames_length, 0);
-				total_bytes_rcvd += num_bytes_rcvd;
-				printf("total_bytes_rcvd = %d\n", total_bytes_rcvd);
+			void* serialized_server_filenames_buffer = (void*) malloc(server_filenames_length);
+			//char serialized_server_filenames_buffer[server_filenames_length];
+			memset(serialized_server_filenames_buffer, 0, server_filenames_length);
+			num_bytes_recv = 0;
+			total_bytes_recv = 0;
+			while(total_bytes_recv < server_filenames_length) {
+				num_bytes_recv = recv(client_sock, serialized_server_filenames_buffer, server_filenames_length, 0);
+				total_bytes_recv += num_bytes_recv;
+				printf("total_bytes_recv = %d\n", total_bytes_recv);
 				printf("serialized_server_filenames_buffer = %s\n", serialized_server_filenames_buffer);
 			}
 			
-			printf("FINAL serialized buffer = %s\n", serialized_server_filenames_buffer);
+			printf("FINAL serialized buffer =\n");
+			printf("%s\n", (char*) serialized_server_filenames_buffer);
+			//printf("array size = %d\n", (int) sizeof(serialized_server_filenames_buffer) / (int) sizeof(serialized_server_filenames_buffer[0]));
+			// for (int i=0; i<server_filenames_length; i++) {
+			// 	printf("%s", &serialized_server_filenames_buffer[i]);
+			// }
+			// printf("\n");
 
 
 			// tokenize filenames
@@ -214,7 +220,7 @@ int send_command(int cmd)
 		{
 			recv(client_sock, filenames_length_buffer, sizeof(size_t), 0);
 
-			char serialized_server_filenames_buffer[sizeof(filenames_length_buffer)];
+			char serialized_server_filenames_buffer[ sizeof(filenames_length_buffer)];
 			recv(client_sock, serialized_server_filenames_buffer, sizeof(serialized_server_filenames_buffer), 0);
 
 			// tokenize filenames
@@ -225,7 +231,7 @@ int send_command(int cmd)
 		{
 			recv(client_sock, filenames_length_buffer, sizeof(size_t), 0);
 
-			char serialized_server_filenames_buffer[sizeof(filenames_length_buffer)];
+			char serialized_server_filenames_buffer[ sizeof(filenames_length_buffer)];
 			recv(client_sock, serialized_server_filenames_buffer, sizeof(serialized_server_filenames_buffer), 0);
 
 			// tokenize filenames
@@ -306,7 +312,7 @@ int send_command(int cmd)
 	}*/
 
 
-	/*while(total_bytes_rcvd < echo_string_len)
+	/*while(total_bytes_recv < echo_string_len)
 	{
 		char buffer[RCVBUFSIZE];
 		num_bytes = recv(client_sock, buffer, RCVBUFSIZE - 1, 0);
@@ -314,7 +320,7 @@ int send_command(int cmd)
 		if(num_bytes <= 0)
 			switch_state(ERROR_STATE);
 		
-		total_bytes_rcvd += num_bytes;
+		total_bytes_recv += num_bytes;
 		buffer[num_bytes] = '\0';
 
 		fputs(buffer, stdout); // temp

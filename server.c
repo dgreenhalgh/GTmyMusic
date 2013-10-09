@@ -219,7 +219,7 @@ int list(int thread_index)
     num_bytes_sent[thread_index] = 0;
     total_bytes_sent[thread_index] = 0;
     while(total_bytes_sent[thread_index] < new_list_message.filenames_length) {
-	   num_bytes_sent[thread_index] = send(helper_struct[thread_index].socket, &new_list_message.serialized_server_filenames, new_list_message.filenames_length, 0);
+	   num_bytes_sent[thread_index] = send(helper_struct[thread_index].socket, new_list_message.serialized_server_filenames, new_list_message.filenames_length, 0);
        total_bytes_sent[thread_index] += num_bytes_sent[thread_index];
 	}
 
