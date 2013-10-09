@@ -328,7 +328,66 @@ int send_command(int cmd)
 		}
 		case(PLL3):
 		{
-			recv(client_sock, files_length_buffer, sizeof(size_t), 0);
+			recv(client_sock, filenames_length_buffer, sizeof(int), 0);
+
+			char serialized_server_filenames_buffer[sizeof(filenames_length_buffer)];
+      		recv(client_sock, serialized_server_filenames_buffer, sizeof(serialized_server_filenames_buffer), 0);
+
+      		recv(client_sock, files_length_buffer, sizeof(int), 0);
+
+      		char serialized_server_files_buffer[sizeof(files_length_buffer)];
+      		recv(client_sock, serialized_server_files_buffer, sizeof(serialized_server_files_buffer), 0);
+
+      		/* Tokenize filenames on newline char*/
+      		char* transferring_filenames[100];
+
+      		char s[2000];
+      		strcpy(s, serialized_server_filenames_buffer);
+      		char* t = strtok(s, "\n");
+      		int c = 0;
+      		while(t != NULL)
+      		{
+        		transferring_filenames[c] = t;
+        		t = strtok(NULL, "\n");
+        		c++;
+      		}
+
+      		/* Tokenize files on null char */
+      		char* transferring_files[25];
+
+      		char u[100000];
+      		strcpy(u,serialized_server_files_buffer);
+
+      		char* v = strtok(u, "'EOF'"); // to string?
+      		int d = 0;
+      		while(v != NULL)
+      		{
+        		printf("%s\n", v);
+        		transferring_files[d] = v;
+        		v = strtok(NULL, "'EOF'"); // to string?
+        		d++;
+      		}
+
+      		/* Added files and filenames to current arrays */
+      		int i_transferring_filename;
+      		for(i_transferring_filename = 0; i_transferring_filename < 25; i_transferring_filename++) // magic numbers errwhere
+      		{
+        		if((transferring_filenames[i_transferring_filename] != NULL) && (transferring_files[i_transferring_filename] != NULL))
+        		{
+          			//local_filenames[i_transferring_filename] = transferring_filenames[i_transferring_filename];
+          			strcpy(local_filenames[i_transferring_filename], transferring_filenames[i_transferring_filename]);
+          			//local_files[i_transferring_filename] = transferring_files[i_transferring_filename];
+          			//strcpy(local_files[i_transferring_filename], transferring_files[i_transferring_filename]);
+
+          			/* Write files to disk */
+          			local_files[i_transferring_filename] = fopen(local_filenames[i_transferring_filename], "w");
+
+          			FILE* new_file;
+          			fwrite(local_files[i_transferring_filename], 1, sizeof(local_files[i_transferring_filename]), new_file);
+
+          			fclose(local_files[i_transferring_filename]);
+        		}
+      		}
 
 			// receive files
 		}

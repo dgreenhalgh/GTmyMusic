@@ -57,7 +57,9 @@
 
 	typedef struct {
 		char command;
-		int files_length;
+		int requested_filenames_length;
+    	char* requested_serialized_server_filenames;
+    	int files_length;
 		FILE* server_files;
 	} pull_message_3;
 
