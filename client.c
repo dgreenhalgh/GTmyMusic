@@ -37,7 +37,7 @@ const char* bad_command = "Command not recognized, exiting now.\n";
 const char* bad_number_of_commands = "Improper number of args, exiting now.\nCommand line menu usage: ./musicClient\nDirect command usage: ./musicClient <command>\n";
 
 /* Socket info */
-int client_sock, i_file, num_files; // no camel case
+int client_sock, i_file, num_files;
 struct sockaddr_in serv_addr;
 
 char rcv_buffer[RCVBUFSIZE];
@@ -45,13 +45,13 @@ char send_buffer[SNDBUFSIZE];
 int total_bytes_rcvd = 0;
 int num_bytes_rcvd = 0;
 
-char* server_ip = "127.0.0.1"; 		// temp
-unsigned short server_port = 2013; 	// temp
+char* server_ip = "127.0.0.1"; 	
+unsigned short server_port = 2013;
 
 FILE* local_files[MAX_NUM_FILES];
 char* local_filenames[MAX_NUM_FILES];
 
-size_t local_file_lengths[MAX_NUM_FILES]; // replace NUM_FILES
+size_t local_file_lengths[MAX_NUM_FILES]; 
 
 /*
  * The main function
@@ -81,6 +81,8 @@ int main(int argc, char *argv[])
 	    		count++;
     		}
 		}
+		//num_files = count;
+		printf("num_files: %d\n", count);
 	}
 
 	if(argc == 1)
@@ -219,7 +221,7 @@ int send_command(int cmd)
 				printf("%s\n", server_filenames[i_transmitted_filename]);*/
 
 
-			/* Testing code */
+			/* Deserialize and tokenize filenames */
 			char* server_filenames[100];
 
 			char s[2000];
@@ -234,23 +236,10 @@ int send_command(int cmd)
 				c++;
 			}
 
-			printf("%d\n", c);
-
+			/* List filenames */
 			int x;
 			for(x = 0; x < c; x++)
 				printf("%s\n", server_filenames[x]);
-
-
-
-
-
-
-
-
-
-
-
-
 		}
 		case(DIFF):
 		{
@@ -259,9 +248,48 @@ int send_command(int cmd)
 			char serialized_server_filenames_buffer[sizeof(filenames_length_buffer)];
 			recv(client_sock, serialized_server_filenames_buffer, sizeof(serialized_server_filenames_buffer), 0);
 
-			// tokenize filenames
-			// diff filenames
+			/* Deserialize and tokenize filenames */
+			char* server_filenames[100];
+
+			char s[2000];
+			strcpy(s, serialized_server_filenames_buffer);
+			char* t = strtok(s, "\n");
+			int c = 0;
+			while(t != NULL)
+			{
+				printf("%s\n", t);
+				server_filenames[c] = t;
+				t = strtok(NULL, "\n");
+				c++;
+			}
+
+			/*int x;
+			for(x = 0; x < c; x++)
+				printf("%s\n", server_filenames[x]);*/
+
+			// diff against local filenames
+			char* diff[100];
+
+			int i_server, diff_id = 0, diff_len = 0;
+			for(i_server = 0; i_server < 10; i_server++)	// replace with num_serv_files
+			{
+				int i_local, no_match = 1;
+				for(i_local = 0; i_local < num_files; i_local++)
+					no_match *= strcmp(local_filenames[i_local], server_filenames[i_server]);
+
+				if(no_match != 0)
+				{
+					diff[diff_id] = server_filenames[i_server];
+					diff_id++;
+				}
+
+				diff_len = diff_id;
+			}
+
 			// print diff
+			int i_diff;
+			for(i_diff = 0; i_diff < diff_len; i_diff++)
+				printf("%s\n", diff[i_diff]);
 		}
 		case(PLL1):
 		{
