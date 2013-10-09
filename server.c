@@ -118,6 +118,7 @@ int main(int argc, char *argv[])
     }
 
     /* Construct local address structure. */
+    printf("Constructing local address structure...\n");
     memset(&server_address, 0, sizeof(server_address));     // zero out structure
     server_address.sin_family = AF_INET;                    // IPv4 address family
     server_address.sin_addr.s_addr = htonl(INADDR_ANY);     // Any incoming interface
@@ -140,13 +141,13 @@ int main(int argc, char *argv[])
 
     /* Loop server forever. */
     while(1){
-        printf("listen thread looping...\n");
+        printf("Listen thread looping...\n");
 
     	address_length = sizeof(client_address);
 
     	/* Accept incoming connection. */
         client_socket = accept(server_socket, (struct sockaddr *) &client_address, &address_length);
-        printf("Connection accepted\n");
+        printf("A connection was accepted!\n");
 
         created_flag = 0;
         while(created_flag == 0){
@@ -154,6 +155,7 @@ int main(int argc, char *argv[])
             for (i=0; i<MAX_PENDING; i++) {
                 if (busy_threads[i] == 0)
                 {
+                    printf("Creating a new thread...\n");
                     helper_struct[i].socket_index = i;
                     helper_struct[i].socket = client_socket;
                     pthread_create(&server_threads[i], NULL, (void*)&command_handler, &helper_struct[i]);
@@ -172,6 +174,7 @@ int main(int argc, char *argv[])
 
 /* Other functions: */
 void command_handler(void* helper_struct) {
+    printf("Handling input command...\n");
     command_handler_helper* p_helper_struct = (command_handler_helper*) helper_struct;
 
 	char command_buffer[2];
@@ -229,6 +232,8 @@ void command_handler(void* helper_struct) {
  */
 int list(int thread_index)
 {
+    printf("LIST Command: Sending current list of files to client...\n");
+
 	list_message new_list_message;
 	new_list_message.command = (char)(((int)'0')+LIST);
 	new_list_message.filenames_length = get_filenames_length(server_filenames);
@@ -272,6 +277,7 @@ int list(int thread_index)
  */
 int diff(int thread_index)
 {
+    printf("DIFF Command: Sending current list of files to client for comparison...\n");
     list_message new_list_message;
     new_list_message.command = (char)(((int)'0')+DIFF);
     new_list_message.filenames_length = get_filenames_length(server_filenames);
@@ -316,6 +322,7 @@ int diff(int thread_index)
 int pull(int thread_index)
 {
 	/* Pull message 1 */ // aka LIST
+    printf("PULL Command 1: Sending current list of files to client for comparison...\n");
     list_message new_list_message;
     new_list_message.command = (char)(((int)'0')+PULL);
     new_list_message.filenames_length = get_filenames_length(server_filenames);
@@ -349,6 +356,7 @@ int pull(int thread_index)
 
 
 	/* Pull message 2 */
+    printf("PULL Command 2: Receiving list of requested files from client for transmission...\n");
     char filenames_length_buffer[sizeof(int)];
     memset(&filenames_length_buffer, 0, sizeof(int));
     num_bytes_recv[thread_index] = 0;
@@ -384,6 +392,7 @@ int pull(int thread_index)
     }
 
 	/* Pull message 3 */
+    printf("PULL Command 3: Transmitting requested files to client...\n");
 	pull_message_3 new_pull_message_3;
 	new_pull_message_3.command = (char)(((int)'0')+PLL3);
 
@@ -396,7 +405,6 @@ int pull(int thread_index)
 
     int i;
     for (i=0; i<diff_count; i++) {
-        printf("debug\n");        
         char* songs =  "./serverSongs/";
         char* path = (char*) malloc(strlen(songs) + strlen(requested_filenames[i]) + 1);
         strcpy(path, songs);
@@ -450,6 +458,7 @@ int pull(int thread_index)
 
 int comp(int thread_index)
 {
+    printf("Comparing files...\n");
     /* client_file_length*/
     char* client_file_length_buffer[sizeof(int)];
     memset(&client_file_length_buffer, 0, sizeof(int));
@@ -462,19 +471,6 @@ int comp(int thread_index)
     }
 
     int client_file_length = *(int*) client_file_length_buffer;
-
-    /* client_file_hash_length */
-    /*char* client_file_hash_length_buffer[sizeof(int)];
-    memset(&client_file_hash_length_buffer, 0, sizeof(int));
-
-    num_bytes_recv[thread_index] = 0;
-    total_bytes_recv[thread_index] = 0;
-    while(total_bytes_recv[thread_index] < sizeof(int)) {
-        num_bytes_recv[thread_index] = recv(helper_struct[thread_index].socket, client_file_hash_length_buffer, sizeof(int), 0);
-        total_bytes_recv[thread_index] += num_bytes_recv[thread_index];
-    }
-
-    int client_file_hash_length = *(int*) client_file_hash_length_buffer;*/
 
     /* client_file_hash */
     char* client_file_hash_buffer[sizeof(unsigned)];
@@ -523,6 +519,8 @@ int comp(int thread_index)
 
         }
     }
+
+    return(0);
 }
 
 /* 
@@ -532,6 +530,7 @@ int comp(int thread_index)
  */
 int leave(int thread_index)
 {
+    printf("LEAVE Command: Ending session with the client...\n");
 	leave_message new_leave_message;
 	//strcpy(new_leave_message.command_name, "LEAF");
 	new_leave_message.command = (char)(((int)'0')+LEAVE);
