@@ -11,20 +11,13 @@
 #include "GTmyMusic.h"
 
 /* Macros */
-#define RCV_BUF_SIZE 	512     /* The receive buffer size */
-#define SND_BUF_SIZE 	512     /* The send buffer size */
-#define BUFFER_SIZE		10 		/* The command can be 10 characters long. */
 #define PORT_NUMBER 	2013	/* Server port number */
 #define MAX_PENDING 	5		/* Maximum outstanding connection requests. */
+#define NUM_FILES       10
 
-#define NUM_FILES 10
-
-/* Constants */
-static const char* example = "Char Star";
-
-/* Function pointers */
+/* Function Prototypes */
 /* Params will need to be fleshed out once we define them */
-int list();
+int list(int);
 int diff();
 int pull();
 int leave();
@@ -33,7 +26,6 @@ char* serialize_filenames(char*[], char*);
 size_t get_server_files_length(size_t[]);
 void command_handler(void*);
 
-
 int server_socket;                          /* Server Socket */
 int client_socket;                          /* Client Socket */
 struct sockaddr_in server_address;          /* Local address */
@@ -41,48 +33,43 @@ struct sockaddr_in client_address;          /* Client address */
 unsigned short server_port;                 /* Server port */
 unsigned int address_length;                /* Length of address data struct */
 
-char command_buffer[RCV_BUF_SIZE];           /* Buff to store command from client */
-char response_buffer[SND_BUF_SIZE];          /* Buff to store response from server */
-
-int num_bytes_sent = 0;
-int total_bytes_sent = 0;
-
 int i_file;
 FILE* server_files[NUM_FILES];
 char* server_filenames[NUM_FILES];
-
 size_t server_file_lengths[NUM_FILES];
-
-int filenames_count = 0;
-
+int filenames_count = 0;  // Manage: inc++ and decr-- as needed!!
 
 /* pthreads */
 static pthread_t *server_threads;
 static int busy_threads[MAX_PENDING] = { 0 };
 static int created_flag = 0;
-static command_handler_helper helper_struct;
+
+command_handler_helper helper_struct[MAX_PENDING];
+
+int num_bytes_recv[MAX_PENDING] = { 0 };
+int total_bytes_recv[MAX_PENDING] = { 0 };
+int num_bytes_sent[MAX_PENDING] = { 0 };
+int total_bytes_sent[MAX_PENDING] = { 0 };
 
 /* 
  * The main function. 
  */
 int main(int argc, char *argv[])
 {
+    /* memset buffers */
+    memset(helper_struct, 0, sizeof(helper_struct));
+
     /* Read in local files */
     printf("Reading local files...\n");
-
 	DIR *dir;
 	struct dirent *ent;
-
 	char cwd[1024];
-	char *wd = getcwd(cwd, sizeof(cwd));//, sizeof(cwd));
-	
+	char *wd = getcwd(cwd, sizeof(cwd));//, sizeof(cwd));	
 	char* full_dir = strcat(cwd, "/serverSongs/");
 
-	if((dir = opendir(full_dir)) != NULL)
-	{
+	if((dir = opendir(full_dir)) != NULL) {
 		int count = 0;
-		while ((ent = readdir (dir)) != NULL)
-		{
+		while ((ent = readdir (dir)) != NULL) {
 			if((strcmp(ent->d_name, ".") != 0) &&
 				(strcmp(ent->d_name, "..") != 0) &&
 				(strcmp(ent->d_name, ".DS_Store") != 0))
@@ -138,16 +125,15 @@ int main(int argc, char *argv[])
         client_socket = accept(server_socket, (struct sockaddr *) &client_address, &address_length);
         printf("Connection accepted\n");
 
-        helper_struct.socket = client_socket;
-
         created_flag = 0;
         while(created_flag == 0){
         	int i;
             for (i=0; i<MAX_PENDING; i++) {
                 if (busy_threads[i] == 0)
                 {
-                    helper_struct.socket_index = i;
-                    pthread_create(&server_threads[i], NULL, (void*)&command_handler, &helper_struct);
+                    helper_struct[i].socket_index = i;
+                    helper_struct[i].socket = client_socket;
+                    pthread_create(&server_threads[i], NULL, (void*)&command_handler, &helper_struct[i]);
                     busy_threads[i] = 1;
                     created_flag = 1;
                     break; //exit for loop
@@ -161,19 +147,24 @@ int main(int argc, char *argv[])
 }
 
 /* Other functions: */
-void command_handler(void* helper_struct)
-{
+void command_handler(void* helper_struct) {
     command_handler_helper* p_helper_struct = (command_handler_helper*) helper_struct;
 
-	char command[2];
-	recv(p_helper_struct->socket, command, 1, 0); // fix me
+	char command_buffer[2];
+    memset(&command_buffer, 0, 2 * sizeof(char));
+    num_bytes_recv[p_helper_struct->socket_index] = 0;
+    total_bytes_recv[p_helper_struct->socket_index] = 0;
+    while(total_bytes_recv[p_helper_struct->socket_index] < sizeof(char)) {
+        num_bytes_recv[p_helper_struct->socket_index] = recv(p_helper_struct->socket, command_buffer, 1, 0);
+        total_bytes_recv[p_helper_struct->socket_index] += num_bytes_recv[p_helper_struct->socket_index];
+    }
 
-	printf("Command %c\n", command[0]);
+	printf("Command %c\n", command_buffer[0]);
 
-	switch(command[0] - '0')
+	switch(command_buffer[0] - '0')
 	{
 		case(LIST):
-			list();
+			list(p_helper_struct->socket_index);
 		case(DIFF):
 			diff();
 		case(PULL):
@@ -194,7 +185,7 @@ void command_handler(void* helper_struct)
  *
  * Sends the list of files currently on the server to the requesting client
  */
-int list()
+int list(int thread_index)
 {
 	list_message new_list_message;
 	new_list_message.command = (char)(((int)'0')+LIST);
@@ -211,25 +202,25 @@ int list()
     printf("return = %s\n", serialized);
     printf("param = %s\n", new_list_message.serialized_server_filenames);
 
-    num_bytes_sent = 0;
-    total_bytes_sent = 0;
-    while(total_bytes_sent < sizeof(new_list_message.command)) {
-        num_bytes_sent = send(helper_struct.socket, &new_list_message.command, sizeof(new_list_message.command), 0);
-        total_bytes_sent += num_bytes_sent;
+    num_bytes_sent[thread_index] = 0;
+    total_bytes_sent[thread_index] = 0;
+    while(total_bytes_sent[thread_index] < sizeof(new_list_message.command)) {
+        num_bytes_sent[thread_index] = send(helper_struct[thread_index].socket, &new_list_message.command, sizeof(new_list_message.command), 0);
+        total_bytes_sent[thread_index] += num_bytes_sent[thread_index];
     }
 
-    num_bytes_sent = 0;
-    total_bytes_sent = 0;
-    while(total_bytes_sent < sizeof(new_list_message.filenames_length)) {
-        num_bytes_sent = send(helper_struct.socket, &new_list_message.filenames_length, sizeof(new_list_message.filenames_length), 0);
-        total_bytes_sent += num_bytes_sent;
+    num_bytes_sent[thread_index] = 0;
+    total_bytes_sent[thread_index] = 0;
+    while(total_bytes_sent[thread_index] < sizeof(new_list_message.filenames_length)) {
+        num_bytes_sent[thread_index] = send(helper_struct[thread_index].socket, &new_list_message.filenames_length, sizeof(new_list_message.filenames_length), 0);
+        total_bytes_sent[thread_index] += num_bytes_sent[thread_index];
     }
 
-    num_bytes_sent = 0;
-    total_bytes_sent = 0;
-    while(total_bytes_sent < new_list_message.filenames_length) {
-	   num_bytes_sent = send(helper_struct.socket, &new_list_message.serialized_server_filenames, new_list_message.filenames_length, 0);
-       total_bytes_sent += num_bytes_sent;
+    num_bytes_sent[thread_index] = 0;
+    total_bytes_sent[thread_index] = 0;
+    while(total_bytes_sent[thread_index] < new_list_message.filenames_length) {
+	   num_bytes_sent[thread_index] = send(helper_struct[thread_index].socket, new_list_message.serialized_server_filenames, new_list_message.filenames_length, 0);
+       total_bytes_sent[thread_index] += num_bytes_sent[thread_index];
 	}
 
     // Cleanup thread?
