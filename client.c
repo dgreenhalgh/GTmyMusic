@@ -26,6 +26,8 @@ void init_connection(char*, unsigned short);
 void create_tcp_socket(int*);
 char* recieve_message();
 int compare_files(char*, char*);
+int get_filenames_length(int, char*[]);
+void serialize_filenames(int , char*[], char*);
 
 /* Strings.xml */
 char* commands[] = {"LIST", "DIFF", "PULL", "PLL1", "PLL2", "PLL3", "LEAF"};
@@ -60,7 +62,6 @@ size_t local_file_lengths[MAX_NUM_FILES]; // replace NUM_FILES
  */
 int main(int argc, char *argv[])
 {
-	printf("sizeof size_t = %zu\n", sizeof(size_t));
 	/* Read in local files */
 	printf("Reading local files...\n");
 	DIR *dir;
@@ -96,19 +97,22 @@ int main(int argc, char *argv[])
 		/* Direct command */
 		if(strcmp(argv[1], "list") == 0)
 		{
+			printf("LIST\n");
 			send_command(LIST);
-			printf("Command Sent!\n");
 		}
 		else if(strcmp(argv[1], "diff") == 0)
 		{
+			printf("DIFF\n");
 			send_command(DIFF);
 		}
 		else if(strcmp(argv[1], "pull") == 0)
 		{
+			printf("PULL\n");
 			send_command(PULL);
 		}
 		else if(strcmp(argv[1], "leave") == 0)
 		{
+			printf("LEAVE\n");
 			send_command(LEAVE);
 		}
 		else
@@ -118,14 +122,13 @@ int main(int argc, char *argv[])
 	}
 	else if(argc == 3)
 	{
+		printf("Compare Files\n");
 		printf("%d\n", compare_files(argv[1], argv[2]));
 	}
 	else
 	{
 		printf("%s", bad_number_of_commands);
 	}
-
-	printf("End of Client MAIN.\n");
 }
 
 /*
@@ -136,13 +139,8 @@ int main(int argc, char *argv[])
  */
 int send_command(int cmd)
 {
-	/* memset buffers */
-	//memset(&send_buffer, 0, SNDBUFSIZE); // example
-
-
 	size_t command_length = sizeof(char);
 	char user_command = (char)(((int)'0')+cmd);
-	printf("%c\n", user_command);
 
 	init_connection(server_ip, server_port);
 	printf("Connected\n");
@@ -159,11 +157,11 @@ int send_command(int cmd)
 		switch_state(ERROR_STATE);
 	}
 
+
 	/* Get response */
 
 
 	/* Read command name */
-	printf("Read command name\n");
 	memset(&command_name_buffer, 0, sizeof(char));
 	num_bytes_recv = 0;
 	total_bytes_recv = 0;
@@ -172,15 +170,10 @@ int send_command(int cmd)
 		total_bytes_recv += num_bytes_recv;
 	}
 
-	printf("we have a command\n");
-	printf("%c\n", command_name_buffer[0]);
-
 	switch(command_name_buffer[0] - '0')
 	{
 		case(LIST):
 		{
-			printf("inside of LIST\n");
-			
 			memset(&filenames_length_buffer, 0, sizeof(int));
 			num_bytes_recv = 0;
 			total_bytes_recv = 0;
@@ -190,24 +183,21 @@ int send_command(int cmd)
 			}
 
 			int server_filenames_length = *(int*) filenames_length_buffer;
-			printf("server_filenames_length = %d\n", server_filenames_length);
 
-			char* serialized_server_filenames_buffer = (char*) malloc(server_filenames_length);
-			memset(serialized_server_filenames_buffer, 0, server_filenames_length);
+			char* serialized_client_filenames_buffer = (char*) malloc(server_filenames_length);
+			memset(serialized_client_filenames_buffer, 0, server_filenames_length);
 			num_bytes_recv = 0;
 			total_bytes_recv = 0;
 			while(total_bytes_recv < server_filenames_length) {
-				num_bytes_recv = recv(client_sock, serialized_server_filenames_buffer, server_filenames_length, 0);
+				num_bytes_recv = recv(client_sock, serialized_client_filenames_buffer, server_filenames_length, 0);
 				total_bytes_recv += num_bytes_recv;
 			}
-			
-			printf("LIST:\n");
 			
 			/* Tokenize filenames */
 		  	char* server_filenames[100];
 
 		    char s[2000];
-		    strcpy(s, serialized_server_filenames_buffer);
+		    strcpy(s, serialized_client_filenames_buffer);
 		    char* t = strtok(s, "\n");
 		    int c = 0;
 		    while(t != NULL)
@@ -221,11 +211,11 @@ int send_command(int cmd)
 		    int x;
 		    for(x = 0; x < c; x++)
 		    	printf("%s\n", server_filenames[x]);
+
+		    break; // Necessary for Case:
 		}
 		case(DIFF):
-		{
-			printf("DIFF\n");
-			
+		{			
 			memset(&filenames_length_buffer, 0, sizeof(int));
 			num_bytes_recv = 0;
 			total_bytes_recv = 0;
@@ -236,12 +226,12 @@ int send_command(int cmd)
 
 			int server_filenames_length = *(int*) filenames_length_buffer;
 
-			char* serialized_server_filenames_buffer = (char*) malloc(server_filenames_length);
-			memset(serialized_server_filenames_buffer, 0, server_filenames_length);
+			char* serialized_client_filenames_buffer = (char*) malloc(server_filenames_length);
+			memset(serialized_client_filenames_buffer, 0, server_filenames_length);
 			num_bytes_recv = 0;
 			total_bytes_recv = 0;
 			while(total_bytes_recv < server_filenames_length) {
-				num_bytes_recv = recv(client_sock, serialized_server_filenames_buffer, server_filenames_length, 0);
+				num_bytes_recv = recv(client_sock, serialized_client_filenames_buffer, server_filenames_length, 0);
 				total_bytes_recv += num_bytes_recv;
 			}
 
@@ -249,7 +239,7 @@ int send_command(int cmd)
 	      	char* server_filenames[100];
 
 		    char s[2000];
-		    strcpy(s, serialized_server_filenames_buffer);
+		    strcpy(s, serialized_client_filenames_buffer);
 		    char* t = strtok(s, "\n");
 		    int c = 0;
 		    while(t != NULL)
@@ -280,21 +270,37 @@ int send_command(int cmd)
 
 	       	// print diff
 	      	int i_diff;
-	      	for(i_diff = 0; i_diff < diff_len; i_diff++)
+	      	for(i_diff = 0; i_diff < diff_len; i_diff++) 
 	        	printf("%s\n", diff[i_diff]);
-		}
-		case(PLL1):
-		{
-			recv(client_sock, filenames_length_buffer, sizeof(int), 0);
 
-			char serialized_server_filenames_buffer[ sizeof(filenames_length_buffer)];
-			recv(client_sock, serialized_server_filenames_buffer, sizeof(serialized_server_filenames_buffer), 0);
+    		break; // Necessary for Case:
+		}
+		case(PULL):
+		{	
+			memset(&filenames_length_buffer, 0, sizeof(int));
+			num_bytes_recv = 0;
+			total_bytes_recv = 0;
+			while(total_bytes_recv < sizeof(int)) {
+				num_bytes_recv = recv(client_sock, filenames_length_buffer, sizeof(int), 0);
+				total_bytes_recv += num_bytes_recv;
+			}
+
+			int server_filenames_length = *(int*) filenames_length_buffer;
+
+			char* serialized_client_filenames_buffer = (char*) malloc(server_filenames_length);
+			memset(serialized_client_filenames_buffer, 0, server_filenames_length);
+			num_bytes_recv = 0;
+			total_bytes_recv = 0;
+			while(total_bytes_recv < server_filenames_length) {
+				num_bytes_recv = recv(client_sock, serialized_client_filenames_buffer, server_filenames_length, 0);
+				total_bytes_recv += num_bytes_recv;
+			}
 
 			/* Tokenize filenames */
 	      	char* server_filenames[100];
 
 	      	char s[2000];
-	       	strcpy(s, serialized_server_filenames_buffer);
+	       	strcpy(s, serialized_client_filenames_buffer);
 	       	char* t = strtok(s, "\n");
 	       	int c = 0;
 	       	while(t != NULL)
@@ -308,7 +314,7 @@ int send_command(int cmd)
 	      	char* diff[100];
 
 	      	int i_server, diff_id = 0, diff_len = 0;
-	      	for(i_server = 0; i_server < 10; i_server++)  // replace with num_serv_files
+	      	for(i_server = 0; i_server < 10; i_server++)  // replace with num_diff_files
 	      	{
 	        	int i_local, no_match = 1;
 	        	for(i_local = 0; i_local < num_files; i_local++)
@@ -325,96 +331,59 @@ int send_command(int cmd)
 
 	      	/* Send diff to server (PLL2) */
 	      	pull_message_2 new_pull_message_2;
+
+		    new_pull_message_2.command = (char)(((int)'0')+PLL2);
+		    new_pull_message_2.filenames_length = get_filenames_length(diff_len, diff);
+		    //printf("Server filenames_length = %d\n", new_pull_message_2.filenames_length);
+
+		    //char* serialized = (char*) malloc(new_pull_message_2.filenames_length);;
+		    new_pull_message_2.serialized_client_filenames = (char*) malloc(new_pull_message_2.filenames_length);
+			serialize_filenames(diff_len, diff, new_pull_message_2.serialized_client_filenames);
+
+		    num_bytes_sent = 0;
+		    total_bytes_sent = 0;
+		    while(total_bytes_sent < sizeof(new_pull_message_2.command)) {
+		        num_bytes_sent = send(client_sock, &new_pull_message_2.command, sizeof(new_pull_message_2.command), 0);
+		        total_bytes_sent += num_bytes_sent;
+		    }
+
+		    num_bytes_sent = 0;
+		    total_bytes_sent = 0;
+		    while(total_bytes_sent < sizeof(new_pull_message_2.filenames_length)) {
+		        num_bytes_sent = send(client_sock, &new_pull_message_2.filenames_length, sizeof(new_pull_message_2.filenames_length), 0);
+		        total_bytes_sent += num_bytes_sent;
+		    }
+
+		    num_bytes_sent = 0;
+		    total_bytes_sent = 0;
+		    while(total_bytes_sent < new_pull_message_2.filenames_length) {
+		       num_bytes_sent = send(client_sock, new_pull_message_2.serialized_client_filenames, new_pull_message_2.filenames_length, 0);
+		       total_bytes_sent += num_bytes_sent;
+		    }
+
+
+		    /* Pull Message 3 */
+
+
+		    break; // Necessary for Case:
 		}
 		case(PLL3):
 		{
-			recv(client_sock, files_length_buffer, sizeof(size_t), 0);
-
-			// receive files
+			printf("PLL3 ??\n");
+		    break; // Necessary for Case:  // Never reached?
 		}
 		case(LEAVE):
 		{
 			// do anything with connection?
 
 			exit(1);
+		    break; // Necessary for Case:  // Never reached?
 		}
 		default:
 			switch_state(ERROR_STATE);
+
+		    break; // Necessary for Case:
 	}
-
-
-	/*if(strcmp(command_name_buffer, "LIST") == 0)
-	{
-		recv(client_sock, filenames_length_buffer, sizeof(size_t), 0);
-
-		char serialized_server_filenames_buffer[sizeof(filenames_length_buffer)];
-		recv(client_sock, serialized_server_filenames_buffer, sizeof(serialized_server_filenames_buffer), 0);
-
-		printf("%s\n", strtok(serialized_server_filenames_buffer, ".mp3")); // for testing
-
-		//char* reinflated_server_filenames[MAX_NUM_FILES] = strtok(serialized_server_filenames_buffer, ".mp3");
-		int i_filename;
-		for(i_filename = 0; i_filename < MAX_NUM_FILES; i_filename++)
-		{
-			if(reinflated_server_filenames[i_filename])
-				printf("%s\n", reinflated_server_filenames[i_filename]);
-		}
-	/
-	else if(strcmp(command_name_buffer, "DIFF") == 0)
-	{
-		recv(client_sock, filenames_length_buffer, sizeof(size_t), 0);
-
-		char serialized_server_filenames_buffer[sizeof(filenames_length_buffer)];
-		recv(client_sock, serialized_server_filenames_buffer, sizeof(serialized_server_filenames_buffer), 0);
-
-		// have to actually diff them
-
-	}
-	else if(strcmp(command_name_buffer, "PLL1") == 0)
-	{
-		recv(client_sock, filenames_length_buffer, sizeof(size_t), 0);
-
-		char serialized_server_filenames_buffer[sizeof(filenames_length_buffer)];
-		recv(client_sock, serialized_server_filenames_buffer, sizeof(serialized_server_filenames_buffer), 0);
-	}
-	else if(strcmp(command_name_buffer, "PLL3") == 0)
-	{
-		recv(client_sock, files_length_buffer, sizeof(size_t), 0);
-
-		int i_transmitted_file;
-		for (i_transmitted_file = 0; i_transmitted_file < MAX_NUM_FILES; i_transmitted_file++)
-		{
-			//recv(client_sock, )
-			// how long should socket stay open?
-		}
-	}
-	else if(strcmp(command_name_buffer, "LEAF") == 0)
-	{
-		//probably have to close connection
-
-		exit(1);
-	}
-	else
-	{
-		switch_state(ERROR_STATE);
-	}*/
-
-
-	/*while(total_bytes_recv < echo_string_len)
-	{
-		char buffer[RCVBUFSIZE];
-		num_bytes = recv(client_sock, buffer, RCVBUFSIZE - 1, 0);
-
-		if(num_bytes <= 0)
-			switch_state(ERROR_STATE);
-		
-		total_bytes_recv += num_bytes;
-		buffer[num_bytes] = '\0';
-
-		fputs(buffer, stdout); // temp
-	}*/
-
-	//printf("End of send command.\n");
 
 	return cmd;
 }
@@ -432,7 +401,32 @@ int switch_state(int state)
 		printf("Welcome!\n");
 		print_main_menu_options();
 		
-		send_command(getchar() + ASCII_CORRECTOR); 
+		char command = getchar();
+		switch (command - '0') {
+			case(ONE):
+			{
+				printf("LIST\n");
+				break;
+			}
+			case(TWO):
+			{
+				printf("DIFF\n");
+				break;
+			}
+			case(THREE):
+			{
+				printf("PULL\n");
+				break;
+			}
+			case(FOUR):
+			{
+				printf("LEAVE\n");
+				break;
+			}
+			default:
+				break;
+		}
+		send_command(command + ASCII_CORRECTOR); 
 
 		close(client_sock);
 	}
@@ -522,4 +516,25 @@ int compare_files(char* filename_a, char* filename_b)
 
 	printf("Same files");
 	return(1);
+}
+
+/*
+ * Returns the number of bytes in the list of filenames on the server
+ */
+int get_filenames_length(int file_count, char* filenames[])
+{
+	int fn_length = 0;
+	int i_filename;
+	for (i_filename = 0; i_filename < file_count; i_filename++)
+		fn_length += strlen(filenames[i_filename]) + 1;
+
+	return fn_length;
+}
+
+void serialize_filenames(int file_count, char* filenames[], char* spaghetti)
+{
+	for(int i_filename = 0; i_filename < file_count; i_filename++)
+	{
+		strcat(strcat(spaghetti, filenames[i_filename]), "\n");
+	}
 }

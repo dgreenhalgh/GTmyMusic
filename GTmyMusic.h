@@ -30,6 +30,12 @@
 	#define PLL3 5
 	#define LEAVE 6
 
+	#define ONE		1
+	#define TWO		2
+	#define THREE	3
+	#define FOUR	4
+		
+
 	/* Message Structures */
 	typedef struct {
 		char command;
@@ -58,7 +64,7 @@
 	typedef struct {
 		char command;
 		int files_length;
-		FILE* server_files;
+		char* server_files;
 	} pull_message_3;
 
 	typedef struct {
