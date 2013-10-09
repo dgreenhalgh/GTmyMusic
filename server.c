@@ -44,8 +44,8 @@ unsigned int address_length;                /* Length of address data struct */
 char command_buffer[RCV_BUF_SIZE];           /* Buff to store command from client */
 char response_buffer[SND_BUF_SIZE];          /* Buff to store response from server */
 
-size_t byte_count;              // Byte counter
-size_t response_length;         // Output Length
+int num_bytes_sent = 0;
+int total_bytes_sent = 0;
 
 int i_file;
 FILE* server_files[NUM_FILES];
@@ -154,30 +154,6 @@ int main(int argc, char *argv[])
                 }                
             }
         }
-
-        // /* Extract the command from the packet and store in command_buffer */
-        // byte_count = recv(server_socket, command_buffer, BUFFER_SIZE - 1, 0);
-        // if (byte_count < 0) {
-        //     printf("recv() failed\n");
-        // }
-        // else if (byte_count == 0) {
-        //     printf("recv()", "connection closed prematurely\n");
-        // }
-
-        // /* Interpret and execute command. */
-        // /* TODO */
-
-        // /* Return response to client */
-        // response_length = strlen(response_buffer);
-
-        // byte_count = send(server_socket, response_buffer, response_length, 0);
-        // if (byte_count < 0) {
-        //     printf("send() failed\n");
-        // }
-        // else if (byte_count != response_length) {
-        //     printf("send()", "sent unexpected number of bytes\n");
-        // }
-
     }
 
     close(client_socket);
@@ -192,7 +168,7 @@ void command_handler(void* helper_struct)
 	char command[2];
 	recv(p_helper_struct->socket, command, 1, 0); // fix me
 
-	printf("%c\n", command[0]);
+	printf("Command %c\n", command[0]);
 
 	switch(command[0] - '0')
 	{
@@ -225,29 +201,36 @@ int list()
     //new_list_message.command_name = (char*) malloc(5);
     //strcpy(new_list_message.command_name, "LIST");
 	new_list_message.filenames_length = get_filenames_length(server_filenames);
-	printf("%d\n", new_list_message.filenames_length);
+	printf("Server filenames_length = %d\n", new_list_message.filenames_length);
 
     char* serialized = (char*) malloc(new_list_message.filenames_length);;
     new_list_message.serialized_server_filenames = (char*) malloc(new_list_message.filenames_length);
     
 
     serialized = serialize_filenames(server_filenames, new_list_message.serialized_server_filenames);
-
-
     printf("return = %s\n", serialized);
     printf("param = %s\n", new_list_message.serialized_server_filenames);
 
+    num_bytes_sent = 0;
+    total_bytes_sent = 0;
+    while(total_bytes_sent < sizeof(new_list_message.command)) {
+        num_bytes_sent = send(helper_struct.socket, &new_list_message.command, sizeof(new_list_message.command), 0);
+        total_bytes_sent += num_bytes_sent;
+    }
 
-    printf("before\n");
-    //char** pp_temp = serialize_filenames(server_filenames, serialized);
-    printf("middle\n");
-    //strcpy(new_list_message.serialized_server_filenames, pp_temp);
-    printf("after\n");
+    num_bytes_sent = 0;
+    total_bytes_sent = 0;
+    while(total_bytes_sent < sizeof(new_list_message.filenames_length)) {
+        num_bytes_sent = send(helper_struct.socket, &new_list_message.filenames_length, sizeof(new_list_message.filenames_length), 0);
+        total_bytes_sent += num_bytes_sent;
+    }
 
-	send(helper_struct.socket, &new_list_message.command, sizeof(new_list_message.command), 0);
-	send(helper_struct.socket, &new_list_message.filenames_length, sizeof(new_list_message.filenames_length), 0);
-	send(helper_struct.socket, &new_list_message.serialized_server_filenames, sizeof(new_list_message.serialized_server_filenames), 0);
-	
+    num_bytes_sent = 0;
+    total_bytes_sent = 0;
+    while(total_bytes_sent < new_list_message.filenames_length) {
+	   num_bytes_sent = send(helper_struct.socket, &new_list_message.serialized_server_filenames, new_list_message.filenames_length, 0);
+       total_bytes_sent += num_bytes_sent;
+	}
 
     // Cleanup thread?
     pthread_exit(NULL);  // may be overkill/not needed?
@@ -341,26 +324,24 @@ int get_filenames_length(char* filenames[])
 	int fn_length = 0;
 	int i_filename;
 	for (i_filename = 0; i_filename < NUM_FILES; i_filename++)
-		fn_length += sizeof(filenames[i_filename]);
+		fn_length += strlen(filenames[i_filename]) + 1;
 
 	return fn_length;
 }
 
 char* serialize_filenames(char* filenames[], char* spaghetti)
 {
-    printf("serialize_filenames\n");
-    printf("count = %d\n", filenames_count);
+    printf("inside serialize_filenames function\n");
+    printf("song count = %d\n", filenames_count);
 
     char* p_temp = (char*) malloc(sizeof(spaghetti));
 	int i_filename;
 
 	for(i_filename = 0; i_filename < filenames_count; i_filename++)
 	{
-        printf("before_cat\n");
-        printf("%s\n", filenames[i_filename]);
+        printf("next filename = %s\n", filenames[i_filename]);
 		strcat(strcat(spaghetti, filenames[i_filename]), "\n");
-        printf("after_cat\n");
-        printf("%s\n", spaghetti);
+        printf("serialized filenames = %s\n", spaghetti);
 	}
 
     p_temp = spaghetti;
