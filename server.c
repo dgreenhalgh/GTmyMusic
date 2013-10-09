@@ -19,12 +19,13 @@
 /* Params will need to be fleshed out once we define them */
 int list(int);
 int diff(int);
-int pull();
-int leave();
+int pull(int);
+int leave(int);
 int get_filenames_length(char*[]);
 char* serialize_filenames(char*[], char*);
-size_t get_server_files_length(size_t[]);
+size_t get_files_length(int, size_t[]);
 void command_handler(void*);
+void serialize_files(int, FILE*[], char*);
 
 int server_socket;                          /* Server Socket */
 int client_socket;                          /* Client Socket */
@@ -142,6 +143,7 @@ int main(int argc, char *argv[])
         }
     }
 
+    closedir(dir);
     close(client_socket);
     return(1);
 }
@@ -159,8 +161,6 @@ void command_handler(void* helper_struct) {
         total_bytes_recv[p_helper_struct->socket_index] += num_bytes_recv[p_helper_struct->socket_index];
     }
 
-	printf("Command %c\n", command_buffer[0]);
-
 	switch(command_buffer[0] - '0')
 	{
 		case(LIST):
@@ -168,9 +168,9 @@ void command_handler(void* helper_struct) {
 		case(DIFF):
 			diff(p_helper_struct->socket_index);
 		case(PULL):
-			pull();
+			pull(p_helper_struct->socket_index);
 		case(LEAVE):
-			leave();
+			leave(p_helper_struct->socket_index);
 		default:
 			printf("%s\n", "Invalid command");
 	}
@@ -189,18 +189,11 @@ int list(int thread_index)
 {
 	list_message new_list_message;
 	new_list_message.command = (char)(((int)'0')+LIST);
-    //new_list_message.command_name = (char*) malloc(5);
-    //strcpy(new_list_message.command_name, "LIST");
 	new_list_message.filenames_length = get_filenames_length(server_filenames);
-	printf("Server filenames_length = %d\n", new_list_message.filenames_length);
 
-    char* serialized = (char*) malloc(new_list_message.filenames_length);;
+    char* serialized = (char*) malloc(new_list_message.filenames_length);
     new_list_message.serialized_server_filenames = (char*) malloc(new_list_message.filenames_length);
-    
-
     serialized = serialize_filenames(server_filenames, new_list_message.serialized_server_filenames);
-    printf("return = %s\n", serialized);
-    printf("param = %s\n", new_list_message.serialized_server_filenames);
 
     num_bytes_sent[thread_index] = 0;
     total_bytes_sent[thread_index] = 0;
@@ -239,18 +232,11 @@ int diff(int thread_index)
 {
     list_message new_list_message;
     new_list_message.command = (char)(((int)'0')+DIFF);
-    //new_list_message.command_name = (char*) malloc(5);
-    //strcpy(new_list_message.command_name, "LIST");
     new_list_message.filenames_length = get_filenames_length(server_filenames);
-    printf("Server filenames_length = %d\n", new_list_message.filenames_length);
 
-    char* serialized = (char*) malloc(new_list_message.filenames_length);;
+    char* serialized = (char*) malloc(new_list_message.filenames_length);
     new_list_message.serialized_server_filenames = (char*) malloc(new_list_message.filenames_length);
-    
-
     serialized = serialize_filenames(server_filenames, new_list_message.serialized_server_filenames);
-    printf("return = %s\n", serialized);
-    printf("param = %s\n", new_list_message.serialized_server_filenames);
 
     num_bytes_sent[thread_index] = 0;
     total_bytes_sent[thread_index] = 0;
@@ -285,37 +271,127 @@ int diff(int thread_index)
  * Diffs and downloads the files not on the client machine to the client 
  * machine
  */
-int pull()
+int pull(int thread_index)
 {
-	/* Pull message 1 */
-	pull_message_1 new_pull_message_1;
-	//strcpy(new_pull_message_1.command_name, "PLL1");
-	new_pull_message_1.command = (char)(((int)'0')+PLL1);
-	new_pull_message_1.filenames_length = get_filenames_length(server_filenames);
-	char* spaghetti = "";
-    new_pull_message_1.serialized_server_filenames = serialize_filenames(server_filenames, spaghetti);
+	/* Pull message 1 */ // aka LIST
+    list_message new_list_message;
+    new_list_message.command = (char)(((int)'0')+PULL);
+    new_list_message.filenames_length = get_filenames_length(server_filenames);
+    printf("Server filenames_length = %d\n", new_list_message.filenames_length);
 
-	send(server_socket, &new_pull_message_1.command, sizeof(new_pull_message_1.command), 0);
-	send(server_socket, &new_pull_message_1.filenames_length, sizeof(new_pull_message_1.filenames_length), 0);
-	send(server_socket, &new_pull_message_1.serialized_server_filenames, sizeof(new_pull_message_1.serialized_server_filenames), 0);
+    char* serialized = (char*) malloc(new_list_message.filenames_length);
+    new_list_message.serialized_server_filenames = (char*) malloc(new_list_message.filenames_length);
+    
+
+    serialized = serialize_filenames(server_filenames, new_list_message.serialized_server_filenames);
+    printf("return = %s\n", serialized);
+    printf("param = %s\n", new_list_message.serialized_server_filenames);
+
+    num_bytes_sent[thread_index] = 0;
+    total_bytes_sent[thread_index] = 0;
+    while(total_bytes_sent[thread_index] < sizeof(new_list_message.command)) {
+        num_bytes_sent[thread_index] = send(helper_struct[thread_index].socket, &new_list_message.command, sizeof(new_list_message.command), 0);
+        total_bytes_sent[thread_index] += num_bytes_sent[thread_index];
+    }
+
+    num_bytes_sent[thread_index] = 0;
+    total_bytes_sent[thread_index] = 0;
+    while(total_bytes_sent[thread_index] < sizeof(new_list_message.filenames_length)) {
+        num_bytes_sent[thread_index] = send(helper_struct[thread_index].socket, &new_list_message.filenames_length, sizeof(new_list_message.filenames_length), 0);
+        total_bytes_sent[thread_index] += num_bytes_sent[thread_index];
+    }
+
+    num_bytes_sent[thread_index] = 0;
+    total_bytes_sent[thread_index] = 0;
+    while(total_bytes_sent[thread_index] < new_list_message.filenames_length) {
+       num_bytes_sent[thread_index] = send(helper_struct[thread_index].socket, new_list_message.serialized_server_filenames, new_list_message.filenames_length, 0);
+       total_bytes_sent[thread_index] += num_bytes_sent[thread_index];
+    }
+
 
 	/* Pull message 2 */
+    char filenames_length_buffer[sizeof(int)];
+    memset(&filenames_length_buffer, 0, sizeof(int));
+    num_bytes_recv[thread_index] = 0;
+    total_bytes_recv[thread_index] = 0;
+    while(total_bytes_recv[thread_index] < sizeof(int)) {
+        num_bytes_recv[thread_index] = recv(helper_struct[thread_index].socket, filenames_length_buffer, sizeof(int), 0);
+        total_bytes_recv[thread_index] += num_bytes_recv[thread_index];
+    }
+
+    int requested_filenames_length = *(int*) filenames_length_buffer;
+
+    char* serialized_client_filenames_buffer = (char*) malloc(requested_filenames_length);
+    memset(serialized_client_filenames_buffer, 0, requested_filenames_length);
+    num_bytes_recv[thread_index] = 0;
+    total_bytes_recv[thread_index] = 0;
+    while(total_bytes_recv[thread_index] < requested_filenames_length) {
+        num_bytes_recv[thread_index] = recv(helper_struct[thread_index].socket, serialized_client_filenames_buffer, requested_filenames_length, 0);
+        total_bytes_recv[thread_index] += num_bytes_recv[thread_index];
+    }
+    
+    /* Tokenize filenames */
+    char* requested_filenames[100];
+
+    char s[2000];
+    strcpy(s, serialized_client_filenames_buffer);
+    char* t = strtok(s, "\n");
+    int diff_count = 0;
+    while(t != NULL)
+    {
+        requested_filenames[diff_count] = t;
+        t = strtok(NULL, "\n");
+        diff_count++;
+    }
 
 
 	/* Pull message 3 */
 	pull_message_3 new_pull_message_3;
-	//strcpy(new_pull_message_3.command_name, "PLL3");
 	new_pull_message_3.command = (char)(((int)'0')+PLL3);
-	new_pull_message_3.files_length = get_server_files_length(server_file_lengths);
-	// pull_message_3.server_files is sent below
+	new_pull_message_3.files_length = get_files_length(diff_count, server_file_lengths); // fix
 
-	send(server_socket, &new_pull_message_3.command, sizeof(new_pull_message_3.command), 0);
-	send(server_socket, &new_pull_message_3.files_length, sizeof(new_pull_message_3.files_length), 0);
+    new_pull_message_3.server_files = (FILE*) malloc(new_pull_message_3.files_length);
 
-	int i_server_file;
-	for(i_server_file = 0; i_server_file < NUM_FILES; i_server_file++)
-		send(server_socket, &new_pull_message_3.server_files[i_server_file], sizeof(new_pull_message_3.server_files[i_server_file]), 0);
+    // Get files from requested filenames.
+    FILE* requested_files[diff_count];
+    char* serialized_files = "";
+    for (int i=0; i<diff_count; i++) {
+        char* path = strcat("./serverSongs/", requested_filenames[i]);
+        requested_files[i] = fopen(path, "r");
 
+        char* next_byte = (char*) malloc(1);
+        while (*next_byte != EOF) {
+            fscanf(requested_files[i], "%c", next_byte);
+            serialized_files = strcat(serialized_files, next_byte);
+        }
+        serialized_files = strcat(serialized_files, "'EOF'");
+        fclose(requested_files[i]);
+    }
+
+    // Convert to one byte stream.
+    //serialize_files(diff_count, requested_files, new_pull_message_3.server_files);
+
+    num_bytes_sent[thread_index] = 0;
+    total_bytes_sent[thread_index] = 0;
+    while(total_bytes_sent[thread_index] < sizeof(new_pull_message_3.command)) {
+        num_bytes_sent[thread_index] = send(helper_struct[thread_index].socket, &new_pull_message_3.command, sizeof(new_pull_message_3.command), 0);
+        total_bytes_sent[thread_index] += num_bytes_sent[thread_index];
+    }
+
+    num_bytes_sent[thread_index] = 0;
+    total_bytes_sent[thread_index] = 0;
+    while(total_bytes_sent[thread_index] < sizeof(new_pull_message_3.files_length)) {
+        num_bytes_sent[thread_index] = send(helper_struct[thread_index].socket, &new_pull_message_3.files_length, sizeof(new_pull_message_3.files_length), 0);
+        total_bytes_sent[thread_index] += num_bytes_sent[thread_index];
+    }
+
+    num_bytes_sent[thread_index] = 0;
+    total_bytes_sent[thread_index] = 0;
+    while(total_bytes_sent[thread_index] < new_pull_message_3.files_length) {
+       num_bytes_sent[thread_index] = send(helper_struct[thread_index].socket, new_pull_message_3.server_files, new_pull_message_3.files_length, 0);
+       total_bytes_sent[thread_index] += num_bytes_sent[thread_index];
+    }
+		
 	return(0); // unused for now
 }
 
@@ -324,7 +400,7 @@ int pull()
  *
  * Client machine and closes its connection with the server
  */
-int leave()
+int leave(int thread_index)
 {
 	leave_message new_leave_message;
 	//strcpy(new_leave_message.command_name, "LEAF");
@@ -348,36 +424,35 @@ int get_filenames_length(char* filenames[])
 	return fn_length;
 }
 
+void serialize_files(int file_count, FILE* files[], char* spaghetti)
+{
+    // for(int i_file = 0; i_file < file_count; i_file++) {
+    //     strcat(strcat(spaghetti, files[i_file]), "\n");
+    // }
+}
+
 char* serialize_filenames(char* filenames[], char* spaghetti)
 {
-    printf("inside serialize_filenames function\n");
-    printf("song count = %d\n", filenames_count);
-
     char* p_temp = (char*) malloc(sizeof(spaghetti));
 	int i_filename;
 
-	for(i_filename = 0; i_filename < filenames_count; i_filename++)
-	{
-        printf("next filename = %s\n", filenames[i_filename]);
+	for(i_filename = 0; i_filename < filenames_count; i_filename++) {
 		strcat(strcat(spaghetti, filenames[i_filename]), "\n");
-        printf("serialized filenames = %s\n", spaghetti);
 	}
 
     p_temp = spaghetti;
 
-    printf("%s\n", p_temp);
-
 	return p_temp;
 }
 
-size_t get_server_files_length(size_t server_file_length_list[])
+size_t get_files_length(int file_count, size_t files_list[])
 {
-	size_t total_server_files_length = 0;
+	size_t total_files_length = 0;
 	int i_file_length;
-	for(i_file_length = 0; i_file_length < NUM_FILES; i_file_length++)
+	for(i_file_length = 0; i_file_length < file_count; i_file_length++)
 	{
-		total_server_files_length += server_file_length_list[i_file_length];
+		total_files_length += files_list[i_file_length];
 	}
 
-	return total_server_files_length;
+	return total_files_length;
 }

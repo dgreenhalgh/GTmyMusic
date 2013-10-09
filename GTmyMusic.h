@@ -30,6 +30,12 @@
 	#define PLL3 5
 	#define LEAVE 6
 
+	#define ONE		1
+	#define TWO		2
+	#define THREE	3
+	#define FOUR	4
+		
+
 	/* Message Structures */
 	typedef struct {
 		char command;
