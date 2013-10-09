@@ -467,11 +467,6 @@ int send_command(int cmd)
 			printf("PLL3 ??\n");
 		    break; // Necessary for Case:  // Never reached?
 		}
-		case(COMP):
-		{
-
-			break;
-		}
 		case(LEAVE):
 		{
 			// do anything with connection?
