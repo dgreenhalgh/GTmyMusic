@@ -18,7 +18,7 @@
 /* Function Prototypes */
 /* Params will need to be fleshed out once we define them */
 int list(int);
-int diff();
+int diff(int);
 int pull();
 int leave();
 int get_filenames_length(char*[]);
@@ -166,7 +166,7 @@ void command_handler(void* helper_struct) {
 		case(LIST):
 			list(p_helper_struct->socket_index);
 		case(DIFF):
-			diff();
+			diff(p_helper_struct->socket_index);
 		case(PULL):
 			pull();
 		case(LEAVE):
@@ -235,20 +235,48 @@ int list(int thread_index)
  * Sends the list of files currently on the server to the requesting client so 
  * that it can be compared to the list of files on the client machine.
  */
-int diff()
+int diff(int thread_index)
 {
-	diff_message new_diff_message;
-	//strcpy(new_diff_message.command_name, "DIFF");
-	new_diff_message.command = (char)(((int)'0')+DIFF);
-	new_diff_message.filenames_length = get_filenames_length(server_filenames);
-    char* spaghetti = "";
-	new_diff_message.serialized_server_filenames = serialize_filenames(server_filenames, spaghetti);
+    list_message new_list_message;
+    new_list_message.command = (char)(((int)'0')+DIFF);
+    //new_list_message.command_name = (char*) malloc(5);
+    //strcpy(new_list_message.command_name, "LIST");
+    new_list_message.filenames_length = get_filenames_length(server_filenames);
+    printf("Server filenames_length = %d\n", new_list_message.filenames_length);
 
-	send(server_socket, &new_diff_message.command, sizeof(new_diff_message.command), 0);
-	send(server_socket, &new_diff_message.filenames_length, sizeof(new_diff_message.filenames_length), 0);
-	send(server_socket, &new_diff_message.serialized_server_filenames, sizeof(new_diff_message.serialized_server_filenames), 0);
+    char* serialized = (char*) malloc(new_list_message.filenames_length);;
+    new_list_message.serialized_server_filenames = (char*) malloc(new_list_message.filenames_length);
+    
 
-	return(0); // unused for now
+    serialized = serialize_filenames(server_filenames, new_list_message.serialized_server_filenames);
+    printf("return = %s\n", serialized);
+    printf("param = %s\n", new_list_message.serialized_server_filenames);
+
+    num_bytes_sent[thread_index] = 0;
+    total_bytes_sent[thread_index] = 0;
+    while(total_bytes_sent[thread_index] < sizeof(new_list_message.command)) {
+        num_bytes_sent[thread_index] = send(helper_struct[thread_index].socket, &new_list_message.command, sizeof(new_list_message.command), 0);
+        total_bytes_sent[thread_index] += num_bytes_sent[thread_index];
+    }
+
+    num_bytes_sent[thread_index] = 0;
+    total_bytes_sent[thread_index] = 0;
+    while(total_bytes_sent[thread_index] < sizeof(new_list_message.filenames_length)) {
+        num_bytes_sent[thread_index] = send(helper_struct[thread_index].socket, &new_list_message.filenames_length, sizeof(new_list_message.filenames_length), 0);
+        total_bytes_sent[thread_index] += num_bytes_sent[thread_index];
+    }
+
+    num_bytes_sent[thread_index] = 0;
+    total_bytes_sent[thread_index] = 0;
+    while(total_bytes_sent[thread_index] < new_list_message.filenames_length) {
+       num_bytes_sent[thread_index] = send(helper_struct[thread_index].socket, new_list_message.serialized_server_filenames, new_list_message.filenames_length, 0);
+       total_bytes_sent[thread_index] += num_bytes_sent[thread_index];
+    }
+
+    // Cleanup thread?
+    pthread_exit(NULL);  // may be overkill/not needed?
+
+    return(0); // unused for now
 }
 
 /* 
