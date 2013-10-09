@@ -69,6 +69,8 @@ int main(int argc, char *argv[])
 	char *wd = getcwd(cwd, sizeof(cwd));//, sizeof(cwd));	
 	char* full_dir = strcat(cwd, "/serverSongs/");
 
+    FILE* fp;
+
 	if((dir = opendir(full_dir)) != NULL) {
 		int count = 0;
 		while ((ent = readdir (dir)) != NULL) {
@@ -76,7 +78,15 @@ int main(int argc, char *argv[])
 				(strcmp(ent->d_name, "..") != 0) &&
 				(strcmp(ent->d_name, ".DS_Store") != 0))
 			{
+                long f_size;
+
 				server_filenames[count] = ent->d_name;
+                //server_files[count] = (FILE*)malloc(sizeof(fopen(ent->d_name, "r")));
+                /*server_files[count] = fopen(ent->d_name, "r");
+                fseek(server_files[count], 0L, SEEK_END);
+                f_size = ftell(server_files[count]);
+                rewind(server_files[count]);*/
+
 				count++;
                 filenames_count++;
     		}
@@ -455,6 +465,37 @@ int comp(int thread_index)
 
     unsigned client_file_hash = *(unsigned*) client_file_hash_buffer;
 
+    /* Check lengths */
+    /*int i_len;
+    for(i_len = 0; i_len < NUM_FILES; i_len++)
+    {
+        long f_size = len(server_files[i_len]); // figure this out
+        if(f_size == client_file_length)
+        {
+            char* f_buffer = calloc(1, f_size + 1);
+            if(!f_buffer)
+            {
+                fclose(server_files[i_len]);
+                printf("alloc fails\n");
+                exit(1);
+            }
+
+            if(1 != fread(f_buffer, f_size, 1, server_files[i_len]))
+            {
+                fclose(server_files[i_len]);
+                free(f_buffer);
+                printf("fread fails\n");
+                exit(1);
+            }
+
+            unsigned server_file_hash = hash(f_buffer);
+            if(server_file_hash == client_file_hash)
+            {
+                // send filename to client
+            }
+
+        }
+    }*/
 }
 
 /* 
@@ -517,4 +558,14 @@ size_t get_files_length(int file_count, size_t files_list[])
 	}
 
 	return total_files_length;
+}
+
+unsigned hash(char *s)
+{
+    unsigned hashval;
+
+    for(hashval = 0;  *s != '\0'; s++)
+        hashval = *s + 31 * hashval;
+
+    return hashval % HASHSIZE;
 }

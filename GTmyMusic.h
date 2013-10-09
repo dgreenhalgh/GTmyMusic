@@ -20,6 +20,7 @@
 	#include <openssl/evp.h>    /* for OpenSSL EVP digest libraries/SHA256 */
 	#include <pthread.h>		/* for parallel processing */
 	#include <dirent.h>
+	#include <sys/stat.h>
 
 	/* Commands */
 	#define LIST 0

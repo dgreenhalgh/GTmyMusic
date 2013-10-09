@@ -525,7 +525,7 @@ int compare_files(char* local_filename)
 	new_hash_compare_message.command = COMP;
 	new_hash_compare_message.client_file_length = f_size;
 	new_hash_compare_message.client_file_hash = hash(f_buffer);
-	new_hash_compare_message.client_file_hash_length = sizeof(new_hash_compare_message.client_file_hash_length);
+	//new_hash_compare_message.client_file_hash_length = sizeof(new_hash_compare_message.client_file_hash_length);
 
 	fclose(l_file);
 	free(f_buffer);
@@ -556,14 +556,14 @@ int compare_files(char* local_filename)
         total_bytes_sent += num_bytes_sent;
     }
 
-    num_bytes_sent = 0;
+    /*num_bytes_sent = 0;
 	total_bytes_sent = 0;
     char* serialized_client_file_hash_len = (char*) malloc(new_hash_compare_message.client_file_hash_length);
     while(total_bytes_sent < sizeof(new_hash_compare_message.client_file_hash_length))
     {
     	num_bytes_sent = send(client_sock, &new_hash_compare_message.client_file_hash_length, sizeof(new_hash_compare_message.client_file_hash_length), 0);
     	total_bytes_sent += num_bytes_sent;
-    }
+    }*/
 
     num_bytes_sent = 0;
 	total_bytes_sent = 0;
