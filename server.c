@@ -354,7 +354,8 @@ printf("debug\n");
     FILE* requested_files[diff_count];
     char* serialized_files1 = (char*) malloc(1);
     char* serialized_files2 = (char*) malloc(1);
-    for (int i=0; i<diff_count; i++) {
+    int i;
+    for (i=0; i<diff_count; i++) {
 printf("debug\n");        
 
         char* path = strcat("./serverSongs/", requested_filenames[i]);

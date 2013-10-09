@@ -142,8 +142,15 @@ int send_command(int cmd)
 	size_t command_length = sizeof(char);
 	char user_command = (char)(((int)'0')+cmd);
 
-	init_connection(server_ip, server_port);
-	printf("Connected\n");
+	if(cmd == LEAVE)
+	{
+		exit(1);
+	}
+	else
+	{
+		init_connection(server_ip, server_port);
+		printf("Connected\n");
+	}
 
 	/* Send command string to the server */
 	num_bytes_sent = 0;
@@ -532,8 +539,9 @@ int get_filenames_length(int file_count, char* filenames[])
 }
 
 void serialize_filenames(int file_count, char* filenames[], char* spaghetti)
-{
-	for(int i_filename = 0; i_filename < file_count; i_filename++)
+{	
+	int i_filename;
+	for(i_filename = 0; i_filename < file_count; i_filename++)
 	{
 		strcat(strcat(spaghetti, filenames[i_filename]), "\n");
 	}

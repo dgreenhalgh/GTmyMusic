@@ -25,10 +25,11 @@
 	#define LIST 0
 	#define DIFF 1
 	#define PULL 2
-	#define PLL1 3
-	#define PLL2 4
-	#define PLL3 5
-	#define LEAVE 6
+	#define LEAVE 3
+	#define PLL1 4
+	#define PLL2 5
+	#define PLL3 6
+	
 
 	#define ONE		1
 	#define TWO		2
