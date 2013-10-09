@@ -39,6 +39,7 @@ int i_file;
 FILE* server_files[NUM_FILES];
 char* server_filenames[NUM_FILES];
 size_t server_file_lengths[NUM_FILES];
+off_t file_lengths[NUM_FILES];
 int filenames_count = 0;  // Manage: inc++ and decr-- as needed!!
 
 /* pthreads */
@@ -70,7 +71,6 @@ int main(int argc, char *argv[])
 	char* full_dir = strcat(cwd, "/serverSongs/");
 
     //FILE* fp;
-    off_t file_lengths[NUM_FILES];
     struct stat st;
 
 	if((dir = opendir(full_dir)) != NULL) {
@@ -475,13 +475,15 @@ int comp(int thread_index)
     unsigned client_file_hash = *(unsigned*) client_file_hash_buffer;
 
     /* Check lengths */
-    /*int i_len;
+    int i_len;
     for(i_len = 0; i_len < NUM_FILES; i_len++)
     {
-        long f_size = len(server_files[i_len]); // figure this out
+        long f_size = file_lengths[i_len]; // figure this out
         if(f_size == client_file_length)
         {
             char* f_buffer = calloc(1, f_size + 1);
+            /*size_t sup = strlen(f_buffer)
+            printf("%d\n", sup);*/
             if(!f_buffer)
             {
                 fclose(server_files[i_len]);
@@ -501,10 +503,11 @@ int comp(int thread_index)
             if(server_file_hash == client_file_hash)
             {
                 // send filename to client
+                printf("yay\n");
             }
 
         }
-    }*/
+    }
 }
 
 /* 

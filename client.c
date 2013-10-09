@@ -48,6 +48,7 @@ int total_bytes_sent = 0;
 char command_name_buffer[2];
 char filenames_length_buffer[sizeof(int)];
 char files_length_buffer[sizeof(size_t)];  // not sure what for?
+off_t file_lengths[MAX_NUM_FILES];
 
 char* server_ip = "127.0.0.1"; 		// temp
 unsigned short server_port = 2013; 	// temp
@@ -72,6 +73,8 @@ int main(int argc, char *argv[])
 	
 	char* full_dir = strcat(cwd, "/clientSongs/");
 
+	struct stat st;
+
 	if((dir = opendir(full_dir)) != NULL)
 	{
 		int count = 0;
@@ -81,6 +84,11 @@ int main(int argc, char *argv[])
 				(strcmp(ent->d_name, "..") != 0) &&
 				(strcmp(ent->d_name, ".DS_Store") != 0))
 			{
+	    		long f_size;
+
+	    		/*stat(ent->d_name, &st);
+	    		file_lengths[count] = st.st_size;*/
+
 	    		local_filenames[count] = ent->d_name;
 	    		count++;
     		}
@@ -498,20 +506,29 @@ int compare_files(char* local_filename)
 {
 	long f_size;
 	char* f_buffer;
+	struct stat st;
 
 	/* FILE* to CHAR* */
 	FILE* l_file = fopen(local_filename, "r");
-	fseek(l_file, 0L, SEEK_END);
+	/*fseek(l_file, 0L, SEEK_END);
 	f_size = ftell(l_file);
-	rewind(l_file);
+	rewind(l_file);*/
 
-	f_buffer = calloc(1, f_size + 1);
+	stat(local_filename, &st);
+	f_size = st.st_size;
+
+	printf("File: %s Size: %lu\n", local_filename, f_size);
+
+	f_buffer = calloc(1, f_size);
+
 	if(!f_buffer)
 	{
 		fclose(l_file);
+		printf("eh\n");
 		printf("alloc fails\n");
 		exit(1);
 	}
+	
 
 	if(1 != fread(f_buffer, f_size, 1, l_file))
 	{
@@ -521,6 +538,7 @@ int compare_files(char* local_filename)
 		exit(1);
 	}
 
+	printf("pased\n");
 	hash_compare_message new_hash_compare_message;
 	new_hash_compare_message.command = COMP;
 	new_hash_compare_message.client_file_length = f_size;
