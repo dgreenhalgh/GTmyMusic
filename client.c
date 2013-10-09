@@ -189,20 +189,16 @@ int send_command(int cmd)
 				total_bytes_recv += num_bytes_recv;
 			}
 
-			// FIX
-			int server_filenames_length = *(int*) filenames_length_buffer; //100; //atoi(filenames_length_buffer);
+			int server_filenames_length = *(int*) filenames_length_buffer;
 			printf("server_filenames_length = %d\n", server_filenames_length);
 
 			char* serialized_server_filenames_buffer = (char*) malloc(server_filenames_length);
-			//char serialized_server_filenames_buffer[server_filenames_length];
 			memset(serialized_server_filenames_buffer, 0, server_filenames_length);
 			num_bytes_recv = 0;
 			total_bytes_recv = 0;
 			while(total_bytes_recv < server_filenames_length) {
 				num_bytes_recv = recv(client_sock, serialized_server_filenames_buffer, server_filenames_length, 0);
 				total_bytes_recv += num_bytes_recv;
-				/*printf("total_bytes_recv = %d\n", total_bytes_recv);
-				printf("serialized_server_filenames_buffer = %s\n", serialized_server_filenames_buffer);*/
 			}
 			
 			printf("LIST:\n");
@@ -228,10 +224,26 @@ int send_command(int cmd)
 		}
 		case(DIFF):
 		{
-			recv(client_sock, filenames_length_buffer, sizeof(int), 0);
+			printf("DIFF\n");
+			
+			memset(&filenames_length_buffer, 0, sizeof(int));
+			num_bytes_recv = 0;
+			total_bytes_recv = 0;
+			while(total_bytes_recv < sizeof(int)) {
+				num_bytes_recv = recv(client_sock, filenames_length_buffer, sizeof(int), 0);
+				total_bytes_recv += num_bytes_recv;
+			}
 
-			char serialized_server_filenames_buffer[ sizeof(filenames_length_buffer)];
-			recv(client_sock, serialized_server_filenames_buffer, sizeof(serialized_server_filenames_buffer), 0);
+			int server_filenames_length = *(int*) filenames_length_buffer;
+
+			char* serialized_server_filenames_buffer = (char*) malloc(server_filenames_length);
+			memset(serialized_server_filenames_buffer, 0, server_filenames_length);
+			num_bytes_recv = 0;
+			total_bytes_recv = 0;
+			while(total_bytes_recv < server_filenames_length) {
+				num_bytes_recv = recv(client_sock, serialized_server_filenames_buffer, server_filenames_length, 0);
+				total_bytes_recv += num_bytes_recv;
+			}
 
 			/* Tokenize filenames */
 	      	char* server_filenames[100];
