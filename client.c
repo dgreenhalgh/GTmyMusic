@@ -369,6 +369,88 @@ int send_command(int cmd)
 
 
 		    /* Pull Message 3 */
+			memset(&filenames_length_buffer, 0, sizeof(int));
+			num_bytes_recv = 0;
+			total_bytes_recv = 0;
+			while(total_bytes_recv < sizeof(int)) {
+				num_bytes_recv = recv(client_sock, filenames_length_buffer, sizeof(int), 0);
+				total_bytes_recv += num_bytes_recv;
+			}
+
+			server_filenames_length = *(int*) filenames_length_buffer;
+
+			serialized_client_filenames_buffer = (char*) malloc(server_filenames_length);
+			memset(serialized_client_filenames_buffer, 0, server_filenames_length);
+			num_bytes_recv = 0;
+			total_bytes_recv = 0;
+			while(total_bytes_recv < server_filenames_length) {
+				num_bytes_recv = recv(client_sock, serialized_client_filenames_buffer, server_filenames_length, 0);
+				total_bytes_recv += num_bytes_recv;
+			}
+
+
+			/**************************************************/
+
+			//printf("%s\n", *(char**) serialized_client_filenames_buffer);
+
+			/* Tokenize file stream */
+		  	char** received_songs = (char**) malloc(diff_len * sizeof(char*));
+		    char* serial = (char*) malloc(*(int*)filenames_length_buffer * sizeof(char));
+		    strcpy(serial, (char*) serialized_client_filenames_buffer);
+		    //printf("%s\n", serialized_client_filenames_buffer);
+		    t = strtok(serial, "'EOF'");
+
+		    printf("%s\n", t);
+		    c = 0;
+		    while(t != NULL)
+		    {
+		        received_songs[c] = t;
+		        t = strtok(serial, "'EOF'");
+		        c++;
+		    }
+
+		    // /* List raw data of songs */
+		    // int x;
+		    // for(x = 0; x < c; x++)
+		    // 	printf("%s\n", received_songs[x]);
+
+
+
+
+
+		    // // Get files from server.
+		    // // Convert from one byte stream to mp3 files.
+		    // FILE* received_files[diff_count];
+		    // char* serialized_files1 = (char*) malloc(1);
+		    // char* serialized_files2 = (char*) malloc(1);
+		    // for (int i=0; i<diff_count; i++) {
+		    //     char* songs =  "./serverSongs/";
+		    //     char* path = malloc(strlen(songs) + strlen(requested_filenames[i]) + 1);
+		    //     strcpy(path, songs);
+		    //     strcat(path, requested_filenames[i]);
+		    //     requested_files[i] = fopen(path, "r");
+		    //     char* next_byte = (char*) malloc(1);
+
+		    //     while (*next_byte != EOF) {
+		    //         serialized_files1 = malloc(strlen(serialized_files2));
+		    //         *serialized_files1 = *serialized_files2;
+		    //         serialized_files2 = malloc(strlen(serialized_files1) + 1);
+		    //         fscanf(requested_files[i], "%c", next_byte);
+		    //         serialized_files2 = strcat(serialized_files1, next_byte);
+		    //     }
+
+		    //     serialized_files1 = malloc(strlen(serialized_files2 + 1));
+		    //     *serialized_files1 = *serialized_files2;
+		    //     serialized_files2 = malloc(strlen(serialized_files1) + 1);
+
+		    //     serialized_files2 = strcat(serialized_files1, "'EOF'");
+		    //     fclose(requested_files[i]);
+		    // }
+
+
+			/**************************************************/
+
+
 
 
 		    break; // Necessary for Case:

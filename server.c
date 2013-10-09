@@ -125,7 +125,9 @@ int main(int argc, char *argv[])
 
     /* Bind to local address structure. */
     if (bind(server_socket, (struct sockaddr*) &server_address, sizeof(server_address)) < 0) {
-        printf("bind() failed\n");
+        printf("Bind() failed, please 'make clean' and 'make' then try again.\n");
+        // EXIT
+        return (1);
     }
 
 	/* Listen for incoming connections. */
@@ -184,17 +186,35 @@ void command_handler(void* helper_struct) {
 	switch(command_buffer[0] - '0')
 	{
 		case(LIST):
+        {
 			list(p_helper_struct->socket_index);
+            break;
+        }
 		case(DIFF):
+        {
 			diff(p_helper_struct->socket_index);
+            break;
+        }
 		case(PULL):
+        {
 			pull(p_helper_struct->socket_index);
+            break;
+        }
         case(COMP):
+        {
             comp(p_helper_struct->socket_index);
+            break;
+        }
 		case(LEAVE):
+        {
 			leave(p_helper_struct->socket_index);
+            break;
+        }
 		default:
+        {
 			printf("%s\n", "Invalid command");
+            break;
+        }
 	}
 
     // Cleanup socket and thread.
@@ -363,40 +383,34 @@ int pull(int thread_index)
         diff_count++;
     }
 
-printf("debug\n");
-
 	/* Pull message 3 */
 	pull_message_3 new_pull_message_3;
 	new_pull_message_3.command = (char)(((int)'0')+PLL3);
-	// new_pull_message_3.files_length = get_files_length(diff_count, server_file_lengths); // fix
-    // new_pull_message_3.server_files = (FILE*) malloc(new_pull_message_3.files_length);
 
     // Get files from requested filenames.
     // Convert to one byte stream.
     FILE* requested_files[diff_count];
+
     char* serialized_files1 = (char*) malloc(1);
     char* serialized_files2 = (char*) malloc(1);
+
     int i;
     for (i=0; i<diff_count; i++) {
-printf("debug\n");        
-
-        char* path = strcat("./serverSongs/", requested_filenames[i]);
+        printf("debug\n");        
+        char* songs =  "./serverSongs/";
+        char* path = (char*) malloc(strlen(songs) + strlen(requested_filenames[i]) + 1);
+        strcpy(path, songs);
+        strcat(path, requested_filenames[i]);
         requested_files[i] = fopen(path, "r");
-
         char* next_byte = (char*) malloc(1);
 
         while (*next_byte != EOF) {
-printf("debug\n");            
-
             serialized_files1 = malloc(strlen(serialized_files2));
             *serialized_files1 = *serialized_files2;
             serialized_files2 = malloc(strlen(serialized_files1) + 1);
-
             fscanf(requested_files[i], "%c", next_byte);
             serialized_files2 = strcat(serialized_files1, next_byte);
         }
-printf("debug\n");
-
         serialized_files1 = malloc(strlen(serialized_files2 + 1));
         *serialized_files1 = *serialized_files2;
         serialized_files2 = malloc(strlen(serialized_files1) + 1);
@@ -407,14 +421,15 @@ printf("debug\n");
 
     new_pull_message_3.files_length = strlen(serialized_files2);
     new_pull_message_3.server_files = serialized_files2;
-    printf("%s\n", serialized_files2);
+    //printf("%s\n", serialized_files2);
 
-    num_bytes_sent[thread_index] = 0;
-    total_bytes_sent[thread_index] = 0;
-    while(total_bytes_sent[thread_index] < sizeof(new_pull_message_3.command)) {
-        num_bytes_sent[thread_index] = send(helper_struct[thread_index].socket, &new_pull_message_3.command, sizeof(new_pull_message_3.command), 0);
-        total_bytes_sent[thread_index] += num_bytes_sent[thread_index];
-    }
+    // num_bytes_sent[thread_index] = 0;
+    // total_bytes_sent[thread_index] = 0;
+    // while(total_bytes_sent[thread_index] < sizeof(new_pull_message_3.command)) {
+    //     printf("loop1\n");
+    //     num_bytes_sent[thread_index] = send(helper_struct[thread_index].socket, &new_pull_message_3.command, sizeof(new_pull_message_3.command), 0);
+    //     total_bytes_sent[thread_index] += num_bytes_sent[thread_index];
+    // }
 
     num_bytes_sent[thread_index] = 0;
     total_bytes_sent[thread_index] = 0;
@@ -426,8 +441,8 @@ printf("debug\n");
     num_bytes_sent[thread_index] = 0;
     total_bytes_sent[thread_index] = 0;
     while(total_bytes_sent[thread_index] < new_pull_message_3.files_length) {
-       num_bytes_sent[thread_index] = send(helper_struct[thread_index].socket, new_pull_message_3.server_files, new_pull_message_3.files_length, 0);
-       total_bytes_sent[thread_index] += num_bytes_sent[thread_index];
+        num_bytes_sent[thread_index] = send(helper_struct[thread_index].socket, new_pull_message_3.server_files, new_pull_message_3.files_length, 0);
+        total_bytes_sent[thread_index] += num_bytes_sent[thread_index];
     }
 		
 	return(0); // unused for now
