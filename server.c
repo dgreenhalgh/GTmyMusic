@@ -519,6 +519,8 @@ int comp(int thread_index)
 
         }
     }
+
+    return(0);
 }
 
 /* 
