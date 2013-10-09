@@ -69,7 +69,9 @@ int main(int argc, char *argv[])
 	char *wd = getcwd(cwd, sizeof(cwd));//, sizeof(cwd));	
 	char* full_dir = strcat(cwd, "/serverSongs/");
 
-    FILE* fp;
+    //FILE* fp;
+    off_t file_lengths[NUM_FILES];
+    struct stat st;
 
 	if((dir = opendir(full_dir)) != NULL) {
 		int count = 0;
@@ -81,6 +83,13 @@ int main(int argc, char *argv[])
                 long f_size;
 
 				server_filenames[count] = ent->d_name;
+
+                printf("%s\n", ent->d_name);
+                stat(ent->d_name, &st);
+                file_lengths[count] = st.st_size;
+                printf("%zd\n", file_lengths[count]);
+
+
                 //server_files[count] = (FILE*)malloc(sizeof(fopen(ent->d_name, "r")));
                 /*server_files[count] = fopen(ent->d_name, "r");
                 fseek(server_files[count], 0L, SEEK_END);
