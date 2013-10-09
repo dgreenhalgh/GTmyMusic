@@ -203,12 +203,12 @@ int send_command(int cmd)
 			printf("FINAL serialized buffer = %s\n", serialized_server_filenames_buffer);
 
 
-			// tokenize filenames
+			/*// tokenize filenames
 			char* server_filenames[100];
 			int i_server_filename = 0;
-			while(strtok(serialized_server_filenames_buffer, '\n') != NULL)
+			while(strtok(serialized_server_filenames_buffer, "\n") != NULL)
 			{
-				server_filenames[i_server_filename] = strtok(serialized_server_filenames_buffer, '\n');
+				server_filenames[i_server_filename] = strtok(serialized_server_filenames_buffer, "\n");
 				i_server_filename++;
 			}
 			printf("%d\n", i_server_filename);
@@ -216,7 +216,41 @@ int send_command(int cmd)
 			// print filenames
 			int i_transmitted_filename;
 			for(i_transmitted_filename = 0; i_transmitted_filename < i_server_filename; i_transmitted_filename++)
-				printf("%s\n", server_filenames[i_transmitted_filename]);
+				printf("%s\n", server_filenames[i_transmitted_filename]);*/
+
+
+			/* Testing code */
+			char* server_filenames[100];
+
+			char s[2000];
+			strcpy(s, serialized_server_filenames_buffer);
+			char* t = strtok(s, "\n");
+			int c = 0;
+			while(t != NULL)
+			{
+				printf("%s\n", t);
+				server_filenames[c] = t;
+				t = strtok(NULL, "\n");
+				c++;
+			}
+
+			printf("%d\n", c);
+
+			int x;
+			for(x = 0; x < c; x++)
+				printf("%s\n", server_filenames[x]);
+
+
+
+
+
+
+
+
+
+
+
+
 		}
 		case(DIFF):
 		{
