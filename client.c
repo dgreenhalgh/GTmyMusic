@@ -179,7 +179,7 @@ int send_command(int cmd)
 			recv(client_sock, filenames_length_buffer, sizeof(size_t), 0);
 			printf("filenames_length_buffer = %s\n", filenames_length_buffer);
 			
-			int server_filenames_length = (int) filenames_length_buffer;
+			int server_filenames_length;// = *filenames_length_buffer;
 			server_filenames_length = 80;
 			printf("server_filenames_length = %d\n", server_filenames_length);
 
@@ -427,4 +427,14 @@ int compare_files(char* filename_a, char* filename_b)
 
 	printf("Same files");
 	return(1);
+}
+
+unsigned hash(char* s)
+{
+	unsigned hashval;
+
+	for(hashval = 0; *s != '\0'; s++)
+		hashval = *s + 31 * hashval;
+
+	return hashval % HASHSIZE;
 }

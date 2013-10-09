@@ -235,7 +235,7 @@ int list()
 
 
     printf("return = %s\n", serialized);
-    printf("param = %s\n", new_list_message.serialized_server_filenames);
+    //printf("param = %s\n", new_list_message.serialized_server_filenames);
 
 
     printf("before\n");
@@ -243,6 +243,7 @@ int list()
     printf("middle\n");
     //strcpy(new_list_message.serialized_server_filenames, pp_temp);
     printf("after\n");
+    printf("%lu\n", sizeof(new_list_message.serialized_server_filenames));
 
 	send(helper_struct.socket, &new_list_message.command, sizeof(new_list_message.command), 0);
 	send(helper_struct.socket, &new_list_message.filenames_length, sizeof(new_list_message.filenames_length), 0);
@@ -380,4 +381,14 @@ size_t get_server_files_length(size_t server_file_length_list[])
 	}
 
 	return total_server_files_length;
+}
+
+unsigned hash(char* s)
+{
+    unsigned hashval;
+
+    for(hashval = 0; *s != '\0'; s++)
+        hashval = *s + 31 * hashval;
+
+    return hashval % HASHSIZE;
 }

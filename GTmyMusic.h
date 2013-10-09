@@ -30,6 +30,11 @@
 	#define PLL3 5
 	#define LEAVE 6
 
+	#define HASHSIZE 101
+
+	/* Function prototypes */
+	unsigned hash(char*);
+
 	/* Message Structures */
 	typedef struct {
 		char command;
