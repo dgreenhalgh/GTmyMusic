@@ -26,3 +26,6 @@ clientSongs/
 # Songs
 *.mp3
 
+# Non-code deliverables
+*.pdf
+*.tar.gz
