@@ -98,11 +98,13 @@ int main(int argc, char *argv[])
 
 	if(argc == 1) {
 		/* Command line interface */
+		printf("Command line interface:\n");
 		switch_state(START_STATE);
 	}
 	else if(argc == 2)
 	{
 		/* Direct command */
+		printf("Direct command:\n");
 		if(strcmp(argv[1], "list") == 0)
 		{
 			printf("LIST\n");
@@ -130,6 +132,8 @@ int main(int argc, char *argv[])
 	}
 	else if((argc == 3) && (strcmp(argv[1], "-c") == 0))
 	{
+		printf("Direct command:\n");
+		printf("File Comparison\n");
 		compare_files(argv[2]);
 	}
 	else
@@ -146,6 +150,7 @@ int main(int argc, char *argv[])
  */
 int send_command(int cmd)
 {
+	printf("Sending command...\n");
 	size_t command_length = sizeof(char);
 	char user_command = (char)(((int)'0')+cmd);
 
